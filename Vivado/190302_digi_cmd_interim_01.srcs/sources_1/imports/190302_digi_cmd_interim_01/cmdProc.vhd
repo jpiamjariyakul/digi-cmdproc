@@ -35,11 +35,15 @@ port (
 end cmdProc;
 
 -- 190304: Added arch - TBC
-architecture cmdProc_arch of cmdProc is
+architecture cmdProc_behav of cmdProc is
 -- Component declaration of dataConsume
-
+    TYPE state_type IS (INIT, bit_0s, HOLD, bit_1s); -- List your states here 
+	SIGNAL curState, nextState : state_type;
+	SIGNAL x_reg : BIT; -- registered input signal
+	SIGNAL en_count_0, en_count_1 : BIT; -- ENABLE inputs for counter 
+	SIGNAL count_0, count_1 : INTEGER := 0; -- counter integers for 0s and 1s
 
 begin
 
     
-end cmdProc_arch;
+end cmdProc_behav;

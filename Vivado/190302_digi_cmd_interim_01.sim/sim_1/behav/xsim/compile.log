@@ -1,18 +1,4 @@
-INFO: [VRFC 10-163] Analyzing VHDL file "C:/Users/jp17033/OneDrive - University of Bristol/Documents/GitHub/digi-cmdproc-interim/Vivado/190302_digi_cmd_interim_01.srcs/sources_1/imports/190302_digi_cmd_interim_01/UART_RX_CTRL.vhd" into library xil_defaultlib
-INFO: [VRFC 10-307] analyzing entity UART_RX_CTRL
-INFO: [VRFC 10-163] Analyzing VHDL file "C:/Users/jp17033/OneDrive - University of Bristol/Documents/GitHub/digi-cmdproc-interim/Vivado/190302_digi_cmd_interim_01.srcs/sources_1/imports/190302_digi_cmd_interim_01/UART_TX_CTRL.vhd" into library xil_defaultlib
-INFO: [VRFC 10-307] analyzing entity UART_TX_CTRL
-INFO: [VRFC 10-163] Analyzing VHDL file "C:/Users/jp17033/OneDrive - University of Bristol/Documents/GitHub/digi-cmdproc-interim/Vivado/190302_digi_cmd_interim_01.srcs/sources_1/imports/190302_digi_cmd_interim_01/common_pack.vhd" into library xil_defaultlib
-INFO: [VRFC 10-163] Analyzing VHDL file "C:/Users/jp17033/OneDrive - University of Bristol/Documents/GitHub/digi-cmdproc-interim/Vivado/190302_digi_cmd_interim_01.srcs/sources_1/imports/peak_detector/cmdProcWrapper.vhd" into library xil_defaultlib
+INFO: [VRFC 10-163] Analyzing VHDL file "C:/Users/jp17033/OneDrive - University of Bristol/Documents/GitHub/digi-cmdproc-interim/Vivado/190302_digi_cmd_interim_01.srcs/sources_1/imports/190302_digi_cmd_interim_01/cmdProc.vhd" into library xil_defaultlib
 INFO: [VRFC 10-307] analyzing entity cmdProc
-INFO: [VRFC 10-163] Analyzing VHDL file "C:/Users/jp17033/OneDrive - University of Bristol/Documents/GitHub/digi-cmdproc-interim/Vivado/190302_digi_cmd_interim_01.srcs/sources_1/imports/peak_detector/cmdProc_synthesised.vhd" into library xil_defaultlib
-INFO: [VRFC 10-307] analyzing entity cmdProc_synthesised
-INFO: [VRFC 10-163] Analyzing VHDL file "C:/Users/jp17033/OneDrive - University of Bristol/Documents/GitHub/digi-cmdproc-interim/Vivado/190302_digi_cmd_interim_01.srcs/sources_1/imports/190302_digi_cmd_interim_01/dataConsumeWrapper.vhd" into library xil_defaultlib
-INFO: [VRFC 10-307] analyzing entity dataConsume
-INFO: [VRFC 10-163] Analyzing VHDL file "C:/Users/jp17033/OneDrive - University of Bristol/Documents/GitHub/digi-cmdproc-interim/Vivado/190302_digi_cmd_interim_01.srcs/sources_1/imports/190302_digi_cmd_interim_01/dataConsume_synthesised_unsigned.vhd" into library xil_defaultlib
-INFO: [VRFC 10-307] analyzing entity comparator
-INFO: [VRFC 10-307] analyzing entity dataConsume_synthesised
-INFO: [VRFC 10-163] Analyzing VHDL file "C:/Users/jp17033/OneDrive - University of Bristol/Documents/GitHub/digi-cmdproc-interim/Vivado/190302_digi_cmd_interim_01.srcs/sources_1/imports/190302_digi_cmd_interim_01/dataGen.vhd" into library xil_defaultlib
-INFO: [VRFC 10-307] analyzing entity dataGen
 INFO: [VRFC 10-163] Analyzing VHDL file "C:/Users/jp17033/OneDrive - University of Bristol/Documents/GitHub/digi-cmdproc-interim/Vivado/190302_digi_cmd_interim_01.srcs/sources_1/imports/190302_digi_cmd_interim_01/tb_CmdProcessor_Interim.vhd" into library xil_defaultlib
 INFO: [VRFC 10-307] analyzing entity tb_cmdProc_interim

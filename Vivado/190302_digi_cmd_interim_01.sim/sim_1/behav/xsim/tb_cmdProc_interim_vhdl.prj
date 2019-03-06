@@ -3,8 +3,7 @@ vhdl xil_defaultlib  \
 "../../../../190302_digi_cmd_interim_01.srcs/sources_1/imports/190302_digi_cmd_interim_01/UART_RX_CTRL.vhd" \
 "../../../../190302_digi_cmd_interim_01.srcs/sources_1/imports/190302_digi_cmd_interim_01/UART_TX_CTRL.vhd" \
 "../../../../190302_digi_cmd_interim_01.srcs/sources_1/imports/190302_digi_cmd_interim_01/common_pack.vhd" \
-"../../../../190302_digi_cmd_interim_01.srcs/sources_1/imports/peak_detector/cmdProcWrapper.vhd" \
-"../../../../190302_digi_cmd_interim_01.srcs/sources_1/imports/peak_detector/cmdProc_synthesised.vhd" \
+"../../../../190302_digi_cmd_interim_01.srcs/sources_1/imports/190302_digi_cmd_interim_01/cmdProc.vhd" \
 "../../../../190302_digi_cmd_interim_01.srcs/sources_1/imports/190302_digi_cmd_interim_01/dataConsumeWrapper.vhd" \
 "../../../../190302_digi_cmd_interim_01.srcs/sources_1/imports/190302_digi_cmd_interim_01/dataConsume_synthesised_unsigned.vhd" \
 "../../../../190302_digi_cmd_interim_01.srcs/sources_1/imports/190302_digi_cmd_interim_01/dataGen.vhd" \
