@@ -43,48 +43,61 @@ end cmdProc;
 
 -- 190304: Added arch - TBC
 architecture cmdProc_arch of cmdProc is
-	component UART_RX_CTRL
-		port (
-			RxD:		in	std_logic;					-- serial data in
-			sysclk:		in	std_logic;					-- system clock
-			reset:		in	std_logic;					-- synchronous reset
-			rxDone:		in	std_logic;					-- data succesfully read (active high)
-		  	rcvDataReg:	out	std_logic_vector(7 downto 0);			-- received data
-			dataReady:	out	std_logic;					-- data ready to be read
-			setOE:		out	std_logic;					-- overrun error (active high)
-			setFE:		out	std_logic					-- frame error (active high)
-		);
-	end component;
-	
-	component UART_TX_CTRL 
-		port (
-			SEND:		in	STD_LOGIC;
-			DATA: 		in	STD_LOGIC_VECTOR (7 downto 0);
-			CLK:		in	STD_LOGIC;
-			READY:		out	STD_LOGIC;
-			UART_TX:	out	STD_LOGIC
-		);
-	end component;
-	
-	component dataConsume
-		port (
-			clk:		in	std_logic;
-		  	reset:		in	std_logic; -- synchronous reset
-		  	start:		in	std_logic; -- goes high to signal data transfer
-		  	numWords_bcd:	in	BCD_ARRAY_TYPE(2 downto 0);
-			ctrlIn:		in	std_logic;
-		  	data:		in	std_logic_vector(7 downto 0);
-			ctrlOut:	out	std_logic;
-			dataReady:	out	std_logic;
-			byte:		out	std_logic_vector(7 downto 0);
-			seqDone:	out	std_logic;
-			maxIndex:	out	BCD_ARRAY_TYPE(2 downto 0);
-			dataResults:	out	CHAR_ARRAY_TYPE(0 to RESULT_BYTE_NUM-1) -- index 3 holds the peak
-		);
-	end component;
-    
+-- Component declaration of dataConsume
+component dataConsume
+	port (
+		clk:		in	std_logic;
+		reset:		in	std_logic; -- synchronous reset
+		start:		in	std_logic; -- goes high to signal data transfer
+		numWords_bcd:	in	BCD_ARRAY_TYPE(2 downto 0);
+		ctrlIn:		in	std_logic;
+		data:		in	std_logic_vector(7 downto 0);
+		ctrlOut:	out	std_logic;
+		dataReady:	out	std_logic;
+		byte:		out	std_logic_vector(7 downto 0);
+		seqDone:	out	std_logic;
+		maxIndex:	out	BCD_ARRAY_TYPE(2 downto 0);
+		dataResults:	out	CHAR_ARRAY_TYPE(0 to RESULT_BYTE_NUM-1) -- index 3 holds the peak
+	);
+end component;
+
+-- Component declaration of Rx
+component UART_RX_CTRL
+	port (
+		RxD:		in	std_logic;					-- serial data in
+		sysclk:		in	std_logic;					-- system clock
+		reset:		in	std_logic;					-- synchronous reset
+		rxDone:		in	std_logic;					-- data succesfully read (active high)
+		rcvDataReg:	out	std_logic_vector(7 downto 0);			-- received data
+		dataReady:	out	std_logic;					-- data ready to be read
+		setOE:		out	std_logic;					-- overrun error (active high)
+		setFE:		out	std_logic					-- frame error (active high)
+	);
+end component;
+
+-- Component declaration of Tx
+component UART_TX_CTRL 
+	port (
+		SEND:		in	STD_LOGIC;
+		DATA: 		in	STD_LOGIC_VECTOR (7 downto 0);
+		CLK:		in	STD_LOGIC;
+		READY:		out	STD_LOGIC;
+		UART_TX:	out	STD_LOGIC
+	);
+end component;
+
+
 begin
-    
+
+-- Port mapping of dataProcessor
+dataProcessor: dataConsume
+port map(
+	clk => clk,
+	reset => reset,
+	
+	y => D(7 downto 0), 
+	dirup => '0' -- Either this or GND - recheck required
+);
 --    delay_CtrlIn: process(clk)     
 --    begin
 --        if rising_edge(clk) then
