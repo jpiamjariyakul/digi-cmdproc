@@ -3,7 +3,7 @@
 <!--                                                         -->
 <!-- Copyright 1986-2018 Xilinx, Inc. All Rights Reserved.   -->
 
-<Project Version="7" Minor="38" Path="C:/Users/jpiam/Documents/GitHub/digi-cmdproc-interim/Vivado/190302_digi_cmd_interim_01.xpr">
+<Project Version="7" Minor="38" Path="C:/Users/jp17033/OneDrive - University of Bristol/Documents/GitHub/digi-cmdproc-interim/Vivado/190302_digi_cmd_interim_01.xpr">
   <DefaultLaunch Dir="$PRUNDIR"/>
   <Configuration>
     <Option Name="Id" Val="39fbb74f0afe4409b2dcdca60c3a32ca"/>
@@ -31,7 +31,7 @@
     <Option Name="EnableBDX" Val="FALSE"/>
     <Option Name="DSAVendor" Val="xilinx"/>
     <Option Name="DSANumComputeUnits" Val="60"/>
-    <Option Name="WTXSimLaunchSim" Val="0"/>
+    <Option Name="WTXSimLaunchSim" Val="1"/>
     <Option Name="WTModelSimLaunchSim" Val="0"/>
     <Option Name="WTQuestaLaunchSim" Val="0"/>
     <Option Name="WTIesLaunchSim" Val="0"/>
@@ -83,10 +83,18 @@
           <Attr Name="UsedIn" Val="simulation"/>
         </FileInfo>
       </File>
-      <File Path="$PSRCDIR/sources_1/imports/190302_digi_cmd_interim_01/cmdProc.vhd">
+      <File Path="$PSRCDIR/sources_1/imports/peak_detector/cmdProcWrapper.vhd">
         <FileInfo>
-          <Attr Name="ImportPath" Val="$PPRDIR/../../../../OneDrive - University of Bristol/Documents/VHDL_Design/Assignment_2/ModelSim/190302_digi_cmd_interim_01/cmdProc.vhd"/>
-          <Attr Name="ImportTime" Val="1551530244"/>
+          <Attr Name="ImportPath" Val="$PPRDIR/../../../VHDL_Design/Assignment_2/source_files/for_distribution/peak_detector/cmdProcWrapper.vhd"/>
+          <Attr Name="ImportTime" Val="1549552760"/>
+          <Attr Name="UsedIn" Val="synthesis"/>
+          <Attr Name="UsedIn" Val="simulation"/>
+        </FileInfo>
+      </File>
+      <File Path="$PSRCDIR/sources_1/imports/peak_detector/cmdProc_synthesised.vhd">
+        <FileInfo>
+          <Attr Name="ImportPath" Val="$PPRDIR/../../../VHDL_Design/Assignment_2/source_files/for_distribution/peak_detector/cmdProc_synthesised.vhd"/>
+          <Attr Name="ImportTime" Val="1549552128"/>
           <Attr Name="UsedIn" Val="synthesis"/>
           <Attr Name="UsedIn" Val="simulation"/>
         </FileInfo>
@@ -119,6 +127,16 @@
         <FileInfo>
           <Attr Name="ImportPath" Val="$PPRDIR/../../../../OneDrive - University of Bristol/Documents/VHDL_Design/Assignment_2/ModelSim/190302_digi_cmd_interim_01/tb_CmdProcessor_Interim.vhd"/>
           <Attr Name="ImportTime" Val="1455713514"/>
+          <Attr Name="UsedIn" Val="synthesis"/>
+          <Attr Name="UsedIn" Val="simulation"/>
+        </FileInfo>
+      </File>
+      <File Path="$PSRCDIR/sources_1/imports/190302_digi_cmd_interim_01/cmdProc.vhd">
+        <FileInfo>
+          <Attr Name="UserDisabled" Val="1"/>
+          <Attr Name="AutoDisabled" Val="1"/>
+          <Attr Name="ImportPath" Val="$PPRDIR/../../../../OneDrive - University of Bristol/Documents/VHDL_Design/Assignment_2/ModelSim/190302_digi_cmd_interim_01/cmdProc.vhd"/>
+          <Attr Name="ImportTime" Val="1551530244"/>
           <Attr Name="UsedIn" Val="synthesis"/>
           <Attr Name="UsedIn" Val="simulation"/>
         </FileInfo>
