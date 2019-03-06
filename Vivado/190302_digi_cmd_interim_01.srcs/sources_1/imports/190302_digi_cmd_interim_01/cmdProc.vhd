@@ -102,7 +102,16 @@ port map(
 --    begin
 --        if rising_edge(clk) then
 
+
 --        end if;
---    end process;
+end process;
+   
+   
+UART_TX_CTRL: UART_TX_CTRL
     
+    
+    
+ 
 end cmdProc_arch;
+
+
