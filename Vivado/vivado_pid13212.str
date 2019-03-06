@@ -2869,3 +2869,36 @@ selectCodeEditor("cmdProc.vhd", 178, 378, false, false, false, false, true); // 
 // TclEventType: DG_GRAPH_GENERATED
 // Elapsed time: 165 seconds
 selectCodeEditor("cmdProc.vhd", 579, 95); // ce (w, ck)
+// Elapsed time: 306 seconds
+selectCodeEditor("cmdProc.vhd", 459, 211); // ce (w, ck)
+// Elapsed time: 118 seconds
+selectCodeEditor("cmdProc.vhd", 216, 380); // ce (w, ck)
+selectCodeEditor("cmdProc.vhd", 216, 380, false, false, false, false, true); // ce (w, ck) - Double Click
+selectCodeEditor("cmdProc.vhd", 287, 390); // ce (w, ck)
+selectCodeEditor("cmdProc.vhd", 287, 386, false, false, false, false, true); // ce (w, ck) - Double Click
+selectCodeEditor("cmdProc.vhd", 287, 386); // ce (w, ck)
+selectCodeEditor("cmdProc.vhd", 287, 385); // ce (w, ck)
+selectCodeEditor("cmdProc.vhd", 287, 385, false, false, false, false, true); // ce (w, ck) - Double Click
+selectCodeEditor("cmdProc.vhd", 354, 376); // ce (w, ck)
+selectCodeEditor("cmdProc.vhd", 354, 376, false, false, false, false, true); // ce (w, ck) - Double Click
+selectCodeEditor("cmdProc.vhd", 531, 527); // ce (w, ck)
+// TclEventType: DG_GRAPH_STALE
+// TclEventType: FILE_SET_CHANGE
+// TclEventType: DG_ANALYSIS_MSG_RESET
+// TclEventType: DG_GRAPH_GENERATED
+selectCodeEditor("cmdProc.vhd", 817, 33); // ce (w, ck)
+selectCodeEditor("cmdProc.vhd", 393, 382); // ce (w, ck)
+selectCodeEditor("cmdProc.vhd", 396, 383); // ce (w, ck)
+// TclEventType: DG_GRAPH_STALE
+// TclEventType: FILE_SET_CHANGE
+// TclEventType: DG_ANALYSIS_MSG_RESET
+// TclEventType: DG_GRAPH_GENERATED
+// HMemoryUtils.trashcanNow. Engine heap size: 792 MB. GUI used memory: 57 MB. Current time: 3/6/19 1:09:53 PM GMT
+// HMemoryUtils.trashcanNow. Engine heap size: 792 MB. GUI used memory: 55 MB. Current time: 3/6/19 1:39:53 PM GMT
+// Elapsed time: 2896 seconds
+selectCodeEditor("cmdProc.vhd", 845, 426); // ce (w, ck)
+selectCodeEditor("cmdProc.vhd", 382, 384); // ce (w, ck)
+// TclEventType: DG_GRAPH_STALE
+// TclEventType: FILE_SET_CHANGE
+// TclEventType: DG_ANALYSIS_MSG_RESET
+// TclEventType: DG_GRAPH_GENERATED

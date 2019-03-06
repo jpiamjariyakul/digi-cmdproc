@@ -37,7 +37,7 @@ end cmdProc;
 -- 190304: Added arch - TBC
 architecture cmdProc_behav of cmdProc is
 -- Component declaration of dataConsume
-    TYPE state_type IS (INIT, bit_0s, HOLD, bit_1s); -- List your states here 
+    TYPE state_type IS (INIT, valid_A, valid_1, valid_2); -- List your states here 
 	SIGNAL curState, nextState : state_type;
 	SIGNAL x_reg : BIT; -- registered input signal
 	SIGNAL en_count_0, en_count_1 : BIT; -- ENABLE inputs for counter 
