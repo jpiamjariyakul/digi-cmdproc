@@ -73,7 +73,7 @@ begin
  
 			WHEN valid_A => 
 				IF rxData = "00110000" OR rxData = "00110001" OR rxData = "00110010" OR rxData = "00110011" OR rxData = "00110100" OR rxData = "00110101" OR rxData = "00110110" OR rxData = "00110111" OR rxData = "00111000" OR rxData = "00111001" THEN -- 0
-					numWords_bcd(2) <= rxData;
+					numWords_bcd(2) <= rxData(3 downto 0);
 					nextState <= valid_1;
 					--ELSIF (rxData = "01000001") or (rxData = "01100001") THEN
 						--nextState <= INIT;
@@ -85,7 +85,7 @@ begin
 
 			WHEN valid_1 =>
 				IF rxData = "00110000" OR rxData = "00110001" OR rxData = "00110010" OR rxData = "00110011" OR rxData = "00110100" OR rxData = "00110101" OR rxData = "00110110" OR rxData = "00110111" OR rxData = "00111000" OR rxData = "00111001" THEN -- 0
-					numWords_bcd(1) <= rxData;
+					numWords_bcd(1) <= rxData(3 downto 0);
 					nextState <= valid_2;
 				ELSIF (rxData = "01000001") or (rxData = "01100001") THEN
 					nextState <= valid_A;
@@ -95,7 +95,7 @@ begin
 
 			WHEN valid_2 => 
 				IF rxData = "00110000" OR rxData = "00110001" OR rxData = "00110010" OR rxData = "00110011" OR rxData = "00110100" OR rxData = "00110101" OR rxData = "00110110" OR rxData = "00110111" OR rxData = "00111000" OR rxData = "00111001" THEN -- 0
-					numWords_bcd(0) <= rxData;
+					numWords_bcd(0) <= rxData(3 downto 0);
 					nextState <= INIT;
 				ELSIF (rxData = "01000001") or (rxData = "01100001") THEN
 					nextState <= valid_A;
@@ -118,13 +118,13 @@ begin
 		END IF;
 	END PROCESS; -- seq
 	-----------------------------------------------------
-	combi_out : PROCESS (curState, processed) -- Use this to process data
-	BEGIN
-		y <= '0'; -- assign default value
-		IF curState = bit_1s THEN -- AND count_1 >= (17 - 1) THEN -- Outputs if counter of 1s are 17 in total (from 0 to 16)
-			y <= '1';
-		END IF;
-	END PROCESS; -- combi_output
+--	combi_out : PROCESS (curState, processed) -- Use this to process data
+--	BEGIN
+--		y <= '0'; -- assign default value
+--		IF curState = bit_1s THEN -- AND count_1 >= (17 - 1) THEN -- Outputs if counter of 1s are 17 in total (from 0 to 16)
+--			y <= '1';
+--		END IF;
+--	END PROCESS; -- combi_output
 
     
 end cmdProc_behav;
