@@ -981,3 +981,66 @@ selectCodeEditor("cmdProc.vhd", 217, 182); // ce (w, ck)
 // TclEventType: DG_ANALYSIS_MSG_RESET
 // TclEventType: DG_GRAPH_GENERATED
 selectCodeEditor("cmdProc.vhd", 223, 436); // ce (w, ck)
+// Elapsed time: 256 seconds
+selectCodeEditor("cmdProc.vhd", 262, 322); // ce (w, ck)
+// Elapsed time: 24 seconds
+selectCodeEditor("cmdProc.vhd", 277, 366); // ce (w, ck)
+selectTab("PlanAheadTabBaseWorkspace_JideTabbedPane", (HResource) null, "cmdProcWrapper.vhd", 3); // k (j, ck)
+selectTree(PAResourceEtoH.FileSetPanel_FILE_SET_PANEL_TREE, "[root, Design Sources, cmdProc_synthesised(STRUCTURE) (cmdProc_synthesised.vhd)]", 7, false); // B (D, ck)
+selectTree(PAResourceEtoH.FileSetPanel_FILE_SET_PANEL_TREE, "[root, Design Sources, cmdProc_synthesised(STRUCTURE) (cmdProc_synthesised.vhd)]", 7, false, false, false, false, false, true); // B (D, ck) - Double Click
+selectTree(PAResourceEtoH.FileSetPanel_FILE_SET_PANEL_TREE, "[root, Design Sources, tb_cmdProc_interim(testbench) (tb_CmdProcessor_Interim.vhd), rx : UART_RX_CTRL(RCVR) (UART_RX_CTRL.vhd)]", 6, false); // B (D, ck)
+selectTree(PAResourceEtoH.FileSetPanel_FILE_SET_PANEL_TREE, "[root, Design Sources, tb_cmdProc_interim(testbench) (tb_CmdProcessor_Interim.vhd), rx : UART_RX_CTRL(RCVR) (UART_RX_CTRL.vhd)]", 6, false, false, false, false, false, true); // B (D, ck) - Double Click
+selectTab("PlanAheadTabBaseWorkspace_JideTabbedPane", (HResource) null, "cmdProcWrapper.vhd", 3); // k (j, ck)
+selectTab("PlanAheadTabBaseWorkspace_JideTabbedPane", (HResource) null, "cmdProc.vhd", 2); // k (j, ck)
+selectCodeEditor("cmdProc.vhd", 234, 288); // ce (w, ck)
+// Elapsed time: 15 seconds
+selectCodeEditor("cmdProc.vhd", 59, 485); // ce (w, ck)
+// Elapsed time: 13 seconds
+selectCodeEditor("cmdProc.vhd", 143, 24); // ce (w, ck)
+selectCodeEditor("cmdProc.vhd", 143, 24, false, false, false, false, true); // ce (w, ck) - Double Click
+typeControlKey((HResource) null, "cmdProc.vhd", 'c'); // ce (w, ck)
+selectCodeEditor("cmdProc.vhd", 287, 248); // ce (w, ck)
+// Elapsed time: 14 seconds
+typeControlKey((HResource) null, "cmdProc.vhd", 'v'); // ce (w, ck)
+selectCodeEditor("cmdProc.vhd", 246, 266); // ce (w, ck)
+typeControlKey((HResource) null, "cmdProc.vhd", 'v'); // ce (w, ck)
+selectCodeEditor("cmdProc.vhd", 368, 272); // ce (w, ck)
+selectCodeEditor("cmdProc.vhd", 142, 259); // ce (w, ck)
+selectCodeEditor("cmdProc.vhd", 142, 259, false, false, false, false, true); // ce (w, ck) - Double Click
+typeControlKey((HResource) null, "cmdProc.vhd", 'c'); // ce (w, ck)
+selectCodeEditor("cmdProc.vhd", 110, 207); // ce (w, ck)
+typeControlKey((HResource) null, "cmdProc.vhd", 'v'); // ce (w, ck)
+selectCodeEditor("cmdProc.vhd", 300, 262); // ce (w, ck)
+// Elapsed time: 17 seconds
+selectCodeEditor("cmdProc.vhd", 131, 265); // ce (w, ck)
+typeControlKey((HResource) null, "cmdProc.vhd", 'c'); // ce (w, ck)
+selectCodeEditor("cmdProc.vhd", 286, 411); // ce (w, ck)
+typeControlKey((HResource) null, "cmdProc.vhd", 'v'); // ce (w, ck)
+selectCodeEditor("cmdProc.vhd", 918, 421); // ce (w, ck)
+selectCodeEditor("cmdProc.vhd", 916, 420); // ce (w, ck)
+selectCodeEditor("cmdProc.vhd", 197, 430); // ce (w, ck)
+selectCodeEditor("cmdProc.vhd", 295, 435, true, false, false, false, false); // ce (w, ck) - Shift Key
+selectCodeEditor("cmdProc.vhd", 121, 445); // ce (w, ck)
+selectCodeEditor("cmdProc.vhd", 303, 433); // ce (w, ck)
+selectCodeEditor("cmdProc.vhd", 83, 436); // ce (w, ck)
+selectCodeEditor("cmdProc.vhd", 130, 451); // ce (w, ck)
+typeControlKey((HResource) null, "cmdProc.vhd", 'c'); // ce (w, ck)
+selectCodeEditor("cmdProc.vhd", 248, 425); // ce (w, ck)
+typeControlKey((HResource) null, "cmdProc.vhd", 'v'); // ce (w, ck)
+typeControlKey(null, null, 'z');
+typeControlKey((HResource) null, "cmdProc.vhd", 'v'); // ce (w, ck)
+selectCodeEditor("cmdProc.vhd", 168, 454); // ce (w, ck)
+// TclEventType: DG_GRAPH_STALE
+// TclEventType: FILE_SET_CHANGE
+selectCodeEditor("cmdProc.vhd", 177, 435); // ce (w, ck)
+// TclEventType: DG_ANALYSIS_MSG_RESET
+// TclEventType: DG_GRAPH_GENERATED
+selectCodeEditor("cmdProc.vhd", 291, 364); // ce (w, ck)
+selectCodeEditor("cmdProc.vhd", 291, 364, false, false, false, false, true); // ce (w, ck) - Double Click
+typeControlKey((HResource) null, "cmdProc.vhd", 'c'); // ce (w, ck)
+selectCodeEditor("cmdProc.vhd", 181, 312); // ce (w, ck)
+typeControlKey((HResource) null, "cmdProc.vhd", 'v'); // ce (w, ck)
+// TclEventType: DG_GRAPH_STALE
+// TclEventType: FILE_SET_CHANGE
+// TclEventType: DG_ANALYSIS_MSG_RESET
+// TclEventType: DG_GRAPH_GENERATED

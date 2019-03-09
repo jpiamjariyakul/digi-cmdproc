@@ -48,10 +48,12 @@ architecture cmdProc_behav of cmdProc is
 begin
 
 	-- FF for storing whether data processed
-	PROCESS (clk)
+	PROCESS (clk, curState, rxData)
 	BEGIN
 		IF clk'EVENT AND clk = '1' THEN
-			processed <= '1';
+			IF curState = valid_2 and (rxData = "00110000" OR rxData = "00110001" OR rxData = "00110010" OR rxData = "00110011" OR rxData = "00110100" OR rxData = "00110101" OR rxData = "00110110" OR rxData = "00110111" OR rxData = "00111000" OR rxData = "00111001") THEN -- 0
+				processed <= '1';
+			END IF;
 		END IF;
 	END PROCESS;
 	----------------------------------------
