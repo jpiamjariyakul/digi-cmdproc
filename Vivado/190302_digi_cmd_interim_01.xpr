@@ -3,7 +3,7 @@
 <!--                                                         -->
 <!-- Copyright 1986-2018 Xilinx, Inc. All Rights Reserved.   -->
 
-<Project Version="7" Minor="38" Path="C:/Users/jpiam/Documents/GitHub/digi-cmdproc-interim/Vivado/190302_digi_cmd_interim_01.xpr">
+<Project Version="7" Minor="38" Path="C:/Users/sv17657/OneDrive - University of Bristol/DigiDesProject/digi-cmdproc-interim/Vivado/190302_digi_cmd_interim_01.xpr">
   <DefaultLaunch Dir="$PRUNDIR"/>
   <Configuration>
     <Option Name="Id" Val="39fbb74f0afe4409b2dcdca60c3a32ca"/>
@@ -61,7 +61,7 @@
       <Filter Type="Srcs"/>
       <File Path="$PSRCDIR/sources_1/imports/190302_digi_cmd_interim_01/UART_RX_CTRL.vhd">
         <FileInfo>
-          <Attr Name="ImportPath" Val="$PPRDIR/../../../../OneDrive - University of Bristol/Documents/VHDL_Design/Assignment_2/ModelSim/190302_digi_cmd_interim_01/UART_RX_CTRL.vhd"/>
+          <Attr Name="ImportPath" Val="$PPRDIR/../../../Documents/VHDL_Design/Assignment_2/ModelSim/190302_digi_cmd_interim_01/UART_RX_CTRL.vhd"/>
           <Attr Name="ImportTime" Val="1550166316"/>
           <Attr Name="UsedIn" Val="synthesis"/>
           <Attr Name="UsedIn" Val="simulation"/>
@@ -69,7 +69,7 @@
       </File>
       <File Path="$PSRCDIR/sources_1/imports/190302_digi_cmd_interim_01/UART_TX_CTRL.vhd">
         <FileInfo>
-          <Attr Name="ImportPath" Val="$PPRDIR/../../../../OneDrive - University of Bristol/Documents/VHDL_Design/Assignment_2/ModelSim/190302_digi_cmd_interim_01/UART_TX_CTRL.vhd"/>
+          <Attr Name="ImportPath" Val="$PPRDIR/../../../Documents/VHDL_Design/Assignment_2/ModelSim/190302_digi_cmd_interim_01/UART_TX_CTRL.vhd"/>
           <Attr Name="ImportTime" Val="1358196720"/>
           <Attr Name="UsedIn" Val="synthesis"/>
           <Attr Name="UsedIn" Val="simulation"/>
@@ -77,23 +77,15 @@
       </File>
       <File Path="$PSRCDIR/sources_1/imports/190302_digi_cmd_interim_01/common_pack.vhd">
         <FileInfo>
-          <Attr Name="ImportPath" Val="$PPRDIR/../../../../OneDrive - University of Bristol/Documents/VHDL_Design/Assignment_2/ModelSim/190302_digi_cmd_interim_01/common_pack.vhd"/>
+          <Attr Name="ImportPath" Val="$PPRDIR/../../../Documents/VHDL_Design/Assignment_2/ModelSim/190302_digi_cmd_interim_01/common_pack.vhd"/>
           <Attr Name="ImportTime" Val="1391796220"/>
-          <Attr Name="UsedIn" Val="synthesis"/>
-          <Attr Name="UsedIn" Val="simulation"/>
-        </FileInfo>
-      </File>
-      <File Path="$PSRCDIR/sources_1/imports/190302_digi_cmd_interim_01/cmdProc.vhd">
-        <FileInfo>
-          <Attr Name="ImportPath" Val="$PPRDIR/../../../../OneDrive - University of Bristol/Documents/VHDL_Design/Assignment_2/ModelSim/190302_digi_cmd_interim_01/cmdProc.vhd"/>
-          <Attr Name="ImportTime" Val="1551530244"/>
           <Attr Name="UsedIn" Val="synthesis"/>
           <Attr Name="UsedIn" Val="simulation"/>
         </FileInfo>
       </File>
       <File Path="$PSRCDIR/sources_1/imports/190302_digi_cmd_interim_01/dataConsumeWrapper.vhd">
         <FileInfo>
-          <Attr Name="ImportPath" Val="$PPRDIR/../../../../OneDrive - University of Bristol/Documents/VHDL_Design/Assignment_2/ModelSim/190302_digi_cmd_interim_01/dataConsumeWrapper.vhd"/>
+          <Attr Name="ImportPath" Val="$PPRDIR/../../../Documents/VHDL_Design/Assignment_2/ModelSim/190302_digi_cmd_interim_01/dataConsumeWrapper.vhd"/>
           <Attr Name="ImportTime" Val="1549552792"/>
           <Attr Name="UsedIn" Val="synthesis"/>
           <Attr Name="UsedIn" Val="simulation"/>
@@ -101,7 +93,7 @@
       </File>
       <File Path="$PSRCDIR/sources_1/imports/190302_digi_cmd_interim_01/dataConsume_synthesised_unsigned.vhd">
         <FileInfo>
-          <Attr Name="ImportPath" Val="$PPRDIR/../../../../OneDrive - University of Bristol/Documents/VHDL_Design/Assignment_2/ModelSim/190302_digi_cmd_interim_01/dataConsume_synthesised_unsigned.vhd"/>
+          <Attr Name="ImportPath" Val="$PPRDIR/../../../Documents/VHDL_Design/Assignment_2/ModelSim/190302_digi_cmd_interim_01/dataConsume_synthesised_unsigned.vhd"/>
           <Attr Name="ImportTime" Val="1549552096"/>
           <Attr Name="UsedIn" Val="synthesis"/>
           <Attr Name="UsedIn" Val="simulation"/>
@@ -109,7 +101,7 @@
       </File>
       <File Path="$PSRCDIR/sources_1/imports/190302_digi_cmd_interim_01/dataGen.vhd">
         <FileInfo>
-          <Attr Name="ImportPath" Val="$PPRDIR/../../../../OneDrive - University of Bristol/Documents/VHDL_Design/Assignment_2/ModelSim/190302_digi_cmd_interim_01/dataGen.vhd"/>
+          <Attr Name="ImportPath" Val="$PPRDIR/../../../Documents/VHDL_Design/Assignment_2/ModelSim/190302_digi_cmd_interim_01/dataGen.vhd"/>
           <Attr Name="ImportTime" Val="1366105592"/>
           <Attr Name="UsedIn" Val="synthesis"/>
           <Attr Name="UsedIn" Val="simulation"/>
@@ -117,8 +109,17 @@
       </File>
       <File Path="$PSRCDIR/sources_1/imports/190302_digi_cmd_interim_01/tb_CmdProcessor_Interim.vhd">
         <FileInfo>
-          <Attr Name="ImportPath" Val="$PPRDIR/../../../../OneDrive - University of Bristol/Documents/VHDL_Design/Assignment_2/ModelSim/190302_digi_cmd_interim_01/tb_CmdProcessor_Interim.vhd"/>
+          <Attr Name="ImportPath" Val="$PPRDIR/../../../Documents/VHDL_Design/Assignment_2/ModelSim/190302_digi_cmd_interim_01/tb_CmdProcessor_Interim.vhd"/>
           <Attr Name="ImportTime" Val="1455713514"/>
+          <Attr Name="UsedIn" Val="synthesis"/>
+          <Attr Name="UsedIn" Val="simulation"/>
+        </FileInfo>
+      </File>
+      <File Path="$PSRCDIR/sources_1/imports/190302_digi_cmd_interim_01/cmdProc.vhd">
+        <FileInfo>
+          <Attr Name="AutoDisabled" Val="1"/>
+          <Attr Name="ImportPath" Val="$PPRDIR/../../../Documents/VHDL_Design/Assignment_2/ModelSim/190302_digi_cmd_interim_01/cmdProc.vhd"/>
+          <Attr Name="ImportTime" Val="1551530244"/>
           <Attr Name="UsedIn" Val="synthesis"/>
           <Attr Name="UsedIn" Val="simulation"/>
         </FileInfo>
