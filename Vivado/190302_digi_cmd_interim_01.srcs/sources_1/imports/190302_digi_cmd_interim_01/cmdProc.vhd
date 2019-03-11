@@ -35,23 +35,33 @@ port (
     seqDone:        in      std_logic
     );
 end cmdProc;
-
 -- 190304: Added arch - TBC
 architecture cmdProc_behav of cmdProc is
 -- Component declaration of dataConsume
     TYPE state_type IS (INIT, valid_A, valid_1, valid_2); -- List your states here 
 	SIGNAL curState, nextState : state_type;
 	SIGNAL processed : BIT; -- registered input signal
+	SIGNAL rxData_reg: std_logic_vector(7 downto 0); -- Stores rxData into FF
 	--SIGNAL num1, num2, num3: std_logic_vector(7 downto 0); --  Stores numbers inputted
 	--SIGNAL en_count_0, en_count_1 : BIT; -- ENABLE inputs for counter 
 	--SIGNAL count_0, count_1 : INTEGER := 0; -- counter integers for 0s and 1s
 begin
-
-	-- FF for storing whether data processed
-	PROCESS (clk, curState, rxData)
+	-- 190310: IDEA - instead of using processed FF, output invalid data instead?
+	-- 190311:	Sequence working! (sans L & P)
+	
+	-- FF for storing incoming rxData - used in checking for next clock cycle whether same data
+	PROCESS (clk, rxData)
 	BEGIN
 		IF clk'EVENT AND clk = '1' THEN
-			IF curState = valid_2 and (rxData = "00110000" OR rxData = "00110001" OR rxData = "00110010" OR rxData = "00110011" OR rxData = "00110100" OR rxData = "00110101" OR rxData = "00110110" OR rxData = "00110111" OR rxData = "00111000" OR rxData = "00111001") THEN -- 0
+			rxData_reg <= rxData;
+		END IF;
+	END PROCESS;
+	
+	-- FF for storing whether data processed
+	PROCESS (clk, curState, rxData_reg)
+	BEGIN
+		IF clk'EVENT AND clk = '1' THEN
+			IF (curState = valid_2) and (rxData /= rxData_reg) and ((rxData = "00110000") OR (rxData = "00110001") OR (rxData = "00110010") OR (rxData = "00110011") OR (rxData = "00110100") OR (rxData = "00110101") OR (rxData = "00110110") OR (rxData = "00110111") OR (rxData = "00111000") OR (rxData = "00111001")) THEN -- 0
 				processed <= '1';
 			END IF;
 		END IF;
@@ -63,16 +73,12 @@ begin
 			WHEN INIT => 
 				IF (rxData = "01000001") or (rxData = "01100001") THEN
 					nextState <= valid_A;
-				--ELSIF processed = '1' AND (rxData = "01001100" OR rxData = "01101100") THEN -- input L
-					--nextState <= INIT;
-				--ELSIF processed = '1' AND (rxData = "01010000" OR rxData = "01110000") THEN -- input P
-					--nextState <= INIT;
 				ELSE
 					nextState <= INIT;
 				END IF;
  
 			WHEN valid_A => 
-				IF rxData = "00110000" OR rxData = "00110001" OR rxData = "00110010" OR rxData = "00110011" OR rxData = "00110100" OR rxData = "00110101" OR rxData = "00110110" OR rxData = "00110111" OR rxData = "00111000" OR rxData = "00111001" THEN -- 0
+				IF (rxData /= rxData_reg) and ((rxData = "00110000") OR (rxData = "00110001") OR (rxData = "00110010") OR (rxData = "00110011") OR (rxData = "00110100") OR (rxData = "00110101") OR (rxData = "00110110") OR (rxData = "00110111") OR (rxData = "00111000") OR (rxData = "00111001")) THEN -- 0
 					numWords_bcd(2) <= rxData(3 downto 0);
 					nextState <= valid_1;
 					--ELSIF (rxData = "01000001") or (rxData = "01100001") THEN
@@ -84,7 +90,9 @@ begin
 				END IF;
 
 			WHEN valid_1 =>
-				IF rxData = "00110000" OR rxData = "00110001" OR rxData = "00110010" OR rxData = "00110011" OR rxData = "00110100" OR rxData = "00110101" OR rxData = "00110110" OR rxData = "00110111" OR rxData = "00111000" OR rxData = "00111001" THEN -- 0
+				IF (rxData = rxData_reg) THEN
+					nextState <= valid_1;
+				ELSIF (rxData /= rxData_reg) and ((rxData = "00110000") OR (rxData = "00110001") OR (rxData = "00110010") OR (rxData = "00110011") OR (rxData = "00110100") OR (rxData = "00110101") OR (rxData = "00110110") OR (rxData = "00110111") OR (rxData = "00111000") OR (rxData = "00111001")) THEN -- 0
 					numWords_bcd(1) <= rxData(3 downto 0);
 					nextState <= valid_2;
 				ELSIF (rxData = "01000001") or (rxData = "01100001") THEN
@@ -93,8 +101,9 @@ begin
 					nextState <= INIT;
 				END IF;
 
-			WHEN valid_2 => 
-				IF rxData = "00110000" OR rxData = "00110001" OR rxData = "00110010" OR rxData = "00110011" OR rxData = "00110100" OR rxData = "00110101" OR rxData = "00110110" OR rxData = "00110111" OR rxData = "00111000" OR rxData = "00111001" THEN -- 0
+			WHEN valid_2 => IF (rxData = rxData_reg) THEN
+					nextState <= valid_2;
+				ELSIF (rxData /= rxData_reg) and ((rxData = "00110000") OR (rxData = "00110001") OR (rxData = "00110010") OR (rxData = "00110011") OR (rxData = "00110100") OR (rxData = "00110101") OR (rxData = "00110110") OR (rxData = "00110111") OR (rxData = "00111000") OR (rxData = "00111001")) THEN -- 0
 					numWords_bcd(0) <= rxData(3 downto 0);
 					nextState <= INIT;
 				ELSIF (rxData = "01000001") or (rxData = "01100001") THEN
@@ -111,20 +120,29 @@ begin
 	-----------------------------------------------------
 	seq_state : PROCESS (clk, reset)
 	BEGIN
-		IF reset = '0' THEN
+		IF reset = '1' THEN
 			curState <= INIT;
 		ELSIF clk'EVENT AND clk = '1' THEN
 			curState <= nextState;
 		END IF;
 	END PROCESS; -- seq
 	-----------------------------------------------------
---	combi_out : PROCESS (curState, processed) -- Use this to process data
---	BEGIN
---		y <= '0'; -- assign default value
---		IF curState = bit_1s THEN -- AND count_1 >= (17 - 1) THEN -- Outputs if counter of 1s are 17 in total (from 0 to 16)
---			y <= '1';
---		END IF;
---	END PROCESS; -- combi_output
+	run_ANNN: PROCESS(curState) -- Used for linking data processing
+	BEGIN
+		
+	END PROCESS;
+	-----------------------------------------------------
+	run_LP: PROCESS (curState, processed) -- Use this to process/list data
+	BEGIN
+		--y <= '0'; -- assign default value
+		-- rxData is P or p, and processed
+		IF (processed = '1') and ((rxData = "01010000") or (rxData = "01110000")) THEN
+			--y <= '1';
+		-- rxData is L or l, and processed
+		ELSIF (processed = '1') and ((rxData = "01001100") or (rxData = "01101100")) THEN
+		
+		END IF;
+	END PROCESS; -- combi_output
 
     
 end cmdProc_behav;
