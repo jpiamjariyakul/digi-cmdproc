@@ -221,6 +221,5 @@ begin
 		
 		END IF;
 	END PROCESS; -- combi_output
-
     
 end cmdProc_behav;
