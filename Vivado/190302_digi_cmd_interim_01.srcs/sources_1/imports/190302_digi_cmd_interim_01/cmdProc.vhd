@@ -41,7 +41,7 @@ end cmdProc;
 -- 190304: Added arch - TBC
 architecture cmdProc_behav of cmdProc is
 -- Component declaration of dataConsume
-    TYPE state_type IS (INIT, dataValid, valid_A, valid_1, valid_2, data); -- List your states here 
+    TYPE state_type IS (INIT, dataValid, valid_A, valid_1, valid_2, dataANNN); -- List your states here 
 	SIGNAL curState, nextState : state_type;
 	SIGNAL processed : BIT; -- registered input signal
 	SIGNAL rxData_reg: std_logic_vector(7 downto 0); -- Stores rxData into FF
@@ -142,7 +142,7 @@ begin
 					bcd_integer <= (100 * bcd_2) + (10 * bcd_1) + bcd_0;
 					
 					v_rxDone := '1'; -- Sets rxDone high for 1 clkCycle
-					nextState <= data;
+					nextState <= dataANNN;
 				ELSIF (rxData = "01000001") or (rxData = "01100001") THEN
 					nextState <= valid_A;
 				ELSE
@@ -150,10 +150,10 @@ begin
 				END IF;
 				-- Question 15: Added an "others" statement to case selection
 				-- Given such, when an invalid encoding is given, the program jumps its state to INIT
-			WHEN data =>
+			WHEN dataANNN =>
 				-- TODO: Compare numWords_bcd w/ count_byte
 				IF (count_byte < (bcd_integer - 1)) THEN
-					nextState <= data;
+					nextState <= dataANNN;
 				ELSE
 					nextState <= INIT;
 				END IF;
@@ -179,7 +179,7 @@ begin
 		start <= '0';
 		if (curState = valid_2) and (rxData /= rxData_reg) and ((rxData = "00110000") OR (rxData = "00110001") OR (rxData = "00110010") OR (rxData = "00110011") OR (rxData = "00110100") OR (rxData = "00110101") OR (rxData = "00110110") OR (rxData = "00110111") OR (rxData = "00111000") OR (rxData = "00111001")) THEN
 			start <= '1'; -- starts data retrieval
-		elsif (curState = data) and (seqDone = '1') then
+		elsif (curState = dataANNN) and (seqDone = '1') then
 			start <= '1'; -- stops data retrieval
 		end if;
 	END PROCESS;
@@ -189,7 +189,7 @@ begin
 	BEGIN
 		en_count_byte <= '0'; -- assign default value
 		--IF (curState = valid_2) and (rxData /= rxData_reg) and ((rxData = "00110000") OR (rxData = "00110001") OR (rxData = "00110010") OR (rxData = "00110011") OR (rxData = "00110100") OR (rxData = "00110101") OR (rxData = "00110110") OR (rxData = "00110111") OR (rxData = "00111000") OR (rxData = "00111001")) THEN
-		IF (curState = data) AND (count_byte < (bcd_integer - 1)) THEN
+		IF (curState = dataANNN) AND (count_byte < (bcd_integer - 1)) THEN
 			en_count_byte <= '1';
 		END IF;
 	END PROCESS;
