@@ -110,7 +110,7 @@ begin
 				IF (rxData /= rxData_reg) and ((rxData = "00110000") OR (rxData = "00110001") OR (rxData = "00110010") OR (rxData = "00110011") OR (rxData = "00110100") OR (rxData = "00110101") OR (rxData = "00110110") OR (rxData = "00110111") OR (rxData = "00111000") OR (rxData = "00111001")) THEN -- 0
 --					num_bcd(2) <= rxData(3 downto 0);
 --					numWords_bcd(2) <= num_bcd(2);
-					numWords_bcd(1) <= rxData(3 downto 0);
+					numWords_bcd(2) <= rxData(3 downto 0);
 					nextState <= valid_1;
 					--ELSIF (rxData = "01000001") or (rxData = "01100001") THEN
 						--nextState <= INIT;
