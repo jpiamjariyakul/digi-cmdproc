@@ -41,7 +41,7 @@ end cmdProc;
 -- 190304: Added arch - TBC
 architecture cmdProc_behav of cmdProc is
 -- Component declaration of dataConsume
-    TYPE state_type IS (INIT, dataValid, valid_A, valid_1, valid_2, dataANNN); -- List your states here 
+    TYPE state_type IS (INIT, dataValid, valid_A, valid_1, valid_2, cmd_ANNN); -- List your states here 
 	SIGNAL curState, nextState : state_type;
 	SIGNAL processed : BIT; -- registered input signal
 	SIGNAL rxData_reg: std_logic_vector(7 downto 0); -- Stores rxData into FF
@@ -64,10 +64,10 @@ begin
 	END PROCESS;
 	
 	-- FF for storing whether data processed
-	PROCESS (clk, curState, rxData_reg)
+	PROCESS (clk, curState, seqDone)
 	BEGIN
 		IF clk'EVENT AND clk = '1' THEN
-			IF (curState = valid_2) and (rxData /= rxData_reg) and ((rxData = "00110000") OR (rxData = "00110001") OR (rxData = "00110010") OR (rxData = "00110011") OR (rxData = "00110100") OR (rxData = "00110101") OR (rxData = "00110110") OR (rxData = "00110111") OR (rxData = "00111000") OR (rxData = "00111001")) THEN -- 0
+			IF (curState = cmd_ANNN) and (seqDone = '1') THEN -- 0
 				processed <= '1';
 			END IF;
 		END IF;
@@ -142,7 +142,7 @@ begin
 					bcd_integer <= (100 * bcd_2) + (10 * bcd_1) + bcd_0;
 					
 					v_rxDone := '1'; -- Sets rxDone high for 1 clkCycle
-					nextState <= dataANNN;
+					nextState <= cmd_ANNN;
 				ELSIF (rxData = "01000001") or (rxData = "01100001") THEN
 					nextState <= valid_A;
 				ELSE
@@ -150,10 +150,10 @@ begin
 				END IF;
 				-- Question 15: Added an "others" statement to case selection
 				-- Given such, when an invalid encoding is given, the program jumps its state to INIT
-			WHEN dataANNN =>
+			WHEN cmd_ANNN =>
 				-- TODO: Compare numWords_bcd w/ count_byte
-				IF (count_byte < (bcd_integer - 1)) THEN
-					nextState <= dataANNN;
+				IF (seqDone = '0') THEN
+					nextState <= cmd_ANNN;
 				ELSE
 					nextState <= INIT;
 				END IF;
@@ -172,16 +172,25 @@ begin
 		END IF;
 	END PROCESS; -- seq
 	-----------------------------------------------------
-	run_ANNN: PROCESS(curState, seqDone, count_byte, bcd_integer) -- Used for linking data processing
+	ANNN_start: PROCESS(curState, seqDone, rxData, rxData_reg) -- Used for linking data processing
 	BEGIN
 	-- 190316-01: Began coding for aNNN (Jay)
 	-- Default values for "start"
 		start <= '0';
+		-- Asserts 1 to start when beginning data retrieval
 		if (curState = valid_2) and (rxData /= rxData_reg) and ((rxData = "00110000") OR (rxData = "00110001") OR (rxData = "00110010") OR (rxData = "00110011") OR (rxData = "00110100") OR (rxData = "00110101") OR (rxData = "00110110") OR (rxData = "00110111") OR (rxData = "00111000") OR (rxData = "00111001")) THEN
 			start <= '1'; -- starts data retrieval
-		elsif (curState = dataANNN) and (seqDone = '1') then
+		-- STOP condition: TODO!
+		elsif (curState = cmd_ANNN) and (seqDone = '1') then
 			start <= '1'; -- stops data retrieval
 		end if;
+	END PROCESS;
+	-----------------------------------------------------
+	ANNN_data: PROCESS(curState, dataReady)
+	BEGIN
+		if (curState = cmd_ANNN) and (dataReady = '1') THEN
+		
+		END IF;
 	END PROCESS;
 	-----------------------------------------------------
 	-- Enable for counter
@@ -189,7 +198,7 @@ begin
 	BEGIN
 		en_count_byte <= '0'; -- assign default value
 		--IF (curState = valid_2) and (rxData /= rxData_reg) and ((rxData = "00110000") OR (rxData = "00110001") OR (rxData = "00110010") OR (rxData = "00110011") OR (rxData = "00110100") OR (rxData = "00110101") OR (rxData = "00110110") OR (rxData = "00110111") OR (rxData = "00111000") OR (rxData = "00111001")) THEN
-		IF (curState = dataANNN) AND (count_byte < (bcd_integer - 1)) THEN
+		IF (curState = cmd_ANNN) AND (count_byte < (bcd_integer - 1)) THEN
 			en_count_byte <= '1';
 		END IF;
 	END PROCESS;
