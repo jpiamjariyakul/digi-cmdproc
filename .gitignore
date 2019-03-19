@@ -2,6 +2,7 @@
 
 # Ignore everything
 *
+Vivado/190302_digi_cmd_interim_01.sim/*
 
 # Whitelist VHD files
 !*.vhd
