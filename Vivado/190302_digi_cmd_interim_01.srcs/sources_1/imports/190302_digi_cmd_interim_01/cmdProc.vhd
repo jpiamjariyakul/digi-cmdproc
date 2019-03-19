@@ -41,7 +41,7 @@ end cmdProc;
 -- 190304: Added arch - TBC
 architecture cmdProc_behav of cmdProc is
 -- Component declaration of dataConsume
-    TYPE state_type IS (INIT, dataValid, valid_A, valid_1, valid_2, cmd_ANNN); -- List your states here 
+    TYPE state_type IS (INIT, dataValid, valid_A, valid_1, valid_2, cmd_ANNN, putty_n, putty_r); -- List your states here 
 	SIGNAL curState, nextState : state_type;
 	SIGNAL processed : BIT; -- registered input signal
 	SIGNAL rxData_reg: std_logic_vector(7 downto 0); -- Stores rxData into FF
@@ -146,7 +146,7 @@ begin
 					bcd_0 <= to_integer(unsigned(num_bcd(0)));
 					bcd_integer <= (100 * bcd_2) + (10 * bcd_1) + bcd_0;
 					
-					v_rxDone := '1'; -- Sets rxDone high for 1 clkCycle
+					--v_rxDone := '1'; -- Sets rxDone high for 1 clkCycle
 					nextState <= cmd_ANNN;
 				ELSIF (rxData = "01000001") or (rxData = "01100001") THEN
 					nextState <= valid_A;
@@ -154,25 +154,47 @@ begin
 					nextState <= INIT;
 				END IF;
 				-- Question 15: Added an "others" statement to case selection
-				-- Given such, when an invalid encoding is given, the program jumps its state to INIT
+				-- Given such, when an invalid encoding is given, the program jumps its state to INIT			
 			WHEN cmd_ANNN =>
 				-- TODO: Compare numWords_bcd w/ count_byte
 				IF (seqDone = '0') THEN
 					nextState <= cmd_ANNN;
 				ELSE
-					nextState <= INIT;
+					nextState <= putty_n;
+					--nextState <= INIT;
 				END IF;
+			
+			-- Breaks line feed & return new line (given valid commands)
+			WHEN putty_n =>
+				nextState <= putty_r;
+			WHEN putty_r =>
+				nextState <= INIT;
+				
 			WHEN OTHERS => 
 				nextState <= INIT;
 		END CASE;
+		v_rxDone := '1';
 		rxDone <= v_rxDone;
 	END PROCESS; -- combi_nextState
 	-----------------------------------------------------
-	echo: PROCESS(rxData, curState)
+	echo: PROCESS(rxData, curState, txdone, rxData)
 	BEGIN
-		if (curState = cmd_ANNN) and (dataReady = '1') and (txdone = '1') THEN
+		if (curState /= cmd_ANNN) and (txdone = '1') THEN
 			txnow <= '1';
-			txdata <= byte;
+			txdata <= rxData; -- Prints ASCII
+		END IF;
+	END PROCESS;
+	-----------------------------------------------------
+	putty_NR: PROCESS(rxData, curState, txdone, rxData)
+	BEGIN
+		IF (txdone = '1') THEN
+			if (curState /= putty_n) THEN
+				txnow <= '1';
+				txdata <= "00001010"; -- Prints ASCII
+			ELSIF (curState /= putty_r) THEN
+				txnow <= '1';
+				txdata <= "00001101";
+			END IF;
 		END IF;
 	END PROCESS;
 	-----------------------------------------------------
