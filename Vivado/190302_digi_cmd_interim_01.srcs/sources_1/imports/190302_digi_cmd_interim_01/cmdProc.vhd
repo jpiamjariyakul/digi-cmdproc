@@ -168,6 +168,14 @@ begin
 		rxDone <= v_rxDone;
 	END PROCESS; -- combi_nextState
 	-----------------------------------------------------
+	echo: PROCESS(rxData, curState)
+	BEGIN
+		if (curState = cmd_ANNN) and (dataReady = '1') and (txdone = '1') THEN
+			txnow <= '1';
+			txdata <= byte;
+		END IF;
+	END PROCESS;
+	-----------------------------------------------------
 	seq_state : PROCESS (clk, reset)
 	BEGIN
 		IF reset = '1' THEN
@@ -232,6 +240,7 @@ begin
 		-- rxData is P or p, and processed
 		IF (processed = '1') and (curState /= cmd_ANNN) and ((rxData = "01010000") or (rxData = "01110000")) THEN
 			--y <= '1';
+			
 		-- rxData is L or l, and processed
 		ELSIF (processed = '1') and (curState /= cmd_ANNN) and ((rxData = "01001100") or (rxData = "01101100")) THEN
 		
