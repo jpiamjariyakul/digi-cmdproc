@@ -2,14 +2,3 @@
 *
 !.gitignore
 !*.vhd
-*.wdf
-*.bat
-*.log
-*.wdb
-*.jou
-*.type
-*.tcl
-*.exe
-*.xdbg
-*.info
-*.html

@@ -38,7 +38,7 @@ port (
     seqDone:        in      std_logic
     );
 end cmdProc;
--- 190304: Added arch - TBC
+-- 190304: Added arch - DONE!
 architecture cmdProc_behav of cmdProc is
 -- Component declaration of dataConsume
     TYPE state_type IS (INIT, dataValid, valid_A, valid_1, valid_2, dataANNN); -- List your states here 
@@ -221,5 +221,5 @@ begin
 		
 		END IF;
 	END PROCESS; -- combi_output
-    
+    --Test2
 end cmdProc_behav;
