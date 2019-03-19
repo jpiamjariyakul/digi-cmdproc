@@ -51,6 +51,8 @@ architecture cmdProc_behav of cmdProc is
 	SIGNAL count_byte: INTEGER := 0; --BCD_ARRAY_TYPE(2 downto 0):= ("0000", "0000", "0000"); -- counter integers for bytes retrieved
 	SIGNAL bcd_integer, bcd_2, bcd_1, bcd_0: INTEGER; -- Equivalent integer
 	SIGNAL num_bcd: BCD_ARRAY_TYPE(2 downto 0) := ("0000", "0000", "0000"); -- Stores the same value as numWords_bcd, but can be read
+	SIGNAL ANNN_dataResults: char_array_type(56 downto 0);
+	SIGNAL ANNN_indexMax: BCD_ARRAY_TYPE(2 downto 0);
 begin
 	-- 190310: IDEA - instead of using processed FF, output invalid data instead?
 	-- 190311:	Sequence working! (sans L & P)
@@ -64,11 +66,14 @@ begin
 	END PROCESS;
 	
 	-- FF for storing whether data processed
-	PROCESS (clk, curState, seqDone)
+	-- Also stores dataResult and peak index
+	PROCESS (clk, curState, seqDone)--, dataResults, maxIndex)
 	BEGIN
 		IF clk'EVENT AND clk = '1' THEN
 			IF (curState = cmd_ANNN) and (seqDone = '1') THEN -- 0
 				processed <= '1';
+				--ANNN_dataResults <= dataResults;
+				--ANNN_indexMax <= maxIndex;
 			END IF;
 		END IF;
 	END PROCESS;
@@ -186,10 +191,12 @@ begin
 		end if;
 	END PROCESS;
 	-----------------------------------------------------
-	ANNN_data: PROCESS(curState, dataReady)
+	-- Process that obtains a byte & displaying it onto screen
+	ANNN_data: PROCESS(curState, dataReady, txdone, byte)
 	BEGIN
-		if (curState = cmd_ANNN) and (dataReady = '1') THEN
-		
+		if (curState = cmd_ANNN) and (dataReady = '1') and (txdone = '1') THEN
+			txnow <= '1';
+			txdata <= byte;
 		END IF;
 	END PROCESS;
 	-----------------------------------------------------
@@ -219,14 +226,14 @@ begin
 		END IF;
 	END PROCESS;
 	-----------------------------------------------------
-	run_LP: PROCESS (curState, processed) -- Use this to process/list data
+	run_LP: PROCESS (curState, processed) -- Use this to peak/list data
 	BEGIN
 		--y <= '0'; -- assign default value
 		-- rxData is P or p, and processed
-		IF (processed = '1') and ((rxData = "01010000") or (rxData = "01110000")) THEN
+		IF (processed = '1') and (curState /= cmd_ANNN) and ((rxData = "01010000") or (rxData = "01110000")) THEN
 			--y <= '1';
 		-- rxData is L or l, and processed
-		ELSIF (processed = '1') and ((rxData = "01001100") or (rxData = "01101100")) THEN
+		ELSIF (processed = '1') and (curState /= cmd_ANNN) and ((rxData = "01001100") or (rxData = "01101100")) THEN
 		
 		END IF;
 	END PROCESS; -- combi_output
