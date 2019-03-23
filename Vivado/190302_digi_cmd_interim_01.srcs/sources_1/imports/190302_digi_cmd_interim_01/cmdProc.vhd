@@ -11,7 +11,7 @@
 library ieee;
 use ieee.std_logic_1164.all;
 use work.common_pack.all;
-use IEEE.numeric_std.ALL;
+--use IEEE.numeric_std.ALL;
 
 -- 190304: Defined entity
 entity cmdProc is
@@ -33,7 +33,7 @@ port (
     dataReady:      in      std_logic;
     byte:           in      std_logic_vector(7 downto 0);
     maxIndex:       in      BCD_ARRAY_TYPE(2 downto 0);
-    dataResults:    in      CHAR_ARRAY_TYPE(56 downto 0);--(0 to RESULT_BYTE_NUM-1);
+    dataResults:    in      CHAR_ARRAY_TYPE(0 to RESULT_BYTE_NUM-1);
     seqDone:        in      std_logic;
     start:          out     std_logic;
     numWords_bcd:   out     BCD_ARRAY_TYPE(2 downto 0)
@@ -45,7 +45,7 @@ architecture cmdProc_behav of cmdProc is
     TYPE state_type IS (INIT, valid_A, valid_1, valid_2, TRANSMIT_putty_n, putty_n, TRANSMIT_putty_r, putty_r, cmd_ANNN_seqDone, cmd_ANNN_runPush, TRANSMIT_Tx_byte, cmd_ANNN_outputty); -- List your states here 
 	SIGNAL curState, nextState : state_type;
 	SIGNAL processed : BIT; -- registered input signal
-	SIGNAL rxData_reg: std_logic_vector(7 downto 0); -- Stores rxData into FF
+	SIGNAL rxData_reg, data_gen: std_logic_vector(7 downto 0); -- Stores rxData into FF
 	--SIGNAL num1, num2, num3: std_logic_vector(7 downto 0); --  Stores numbers inputted
 --	SIGNAL en_count_byte: BIT; -- ENABLE input for counter 
 --	SIGNAL count_byte: INTEGER := 0; --BCD_ARRAY_TYPE(2 downto 0):= ("0000", "0000", "0000"); -- counter integers for bytes retrieved
@@ -86,15 +86,16 @@ begin
 	END PROCESS; -- seq
 	-----------------------------------------------------
 	combi_nextState : PROCESS (curState, rxNow, rxData, rxData_reg, processed, seqDone, txDone) --, count_byte, num_bcd, bcd_integer, bcd_2, bcd_1, bcd_0)
-		variable v_rxDone: std_logic; -- variable for rxDone
+		variable v_rxDone, v_txNow: std_logic; -- variable for rxDone
 	BEGIN
 		-- assign defaults at the beginning to avoid having to assign in every branch
 		--txDone := '0';
-		rxDone <= '0'; -- Default value of rxDone
+		v_rxDone := '0'; -- Default value of rxDone
+		v_txNow := '0';
 		CASE curState IS
 			WHEN INIT => --(sig_rxNow = '1') and 
 				IF (rxNow = '1') and ((rxData = "01000001") or (rxData = "01100001")) THEN
-					rxDone <= '1';
+					v_rxDone := '1';
 					nextState <= valid_A;
 				ELSE
 					nextState <= INIT;
@@ -103,10 +104,10 @@ begin
 			WHEN valid_A => 
 				IF (rxData /= rxData_reg) and ((rxData = "00110000") OR (rxData = "00110001") OR (rxData = "00110010") OR (rxData = "00110011") OR (rxData = "00110100") OR (rxData = "00110101") OR (rxData = "00110110") OR (rxData = "00110111") OR (rxData = "00111000") OR (rxData = "00111001")) THEN
 					numWords_bcd(2) <= rxData(3 downto 0);
-					rxDone <= '1';
+					v_rxDone := '1';
 					nextState <= valid_1;
 				ELSIF (rxData = "01000001") or (rxData = "01100001") THEN
-					rxDone <= '1';
+					v_rxDone := '1';
 					nextState <= valid_A;
 				ELSE
 					nextState <= INIT;
@@ -117,10 +118,10 @@ begin
 					nextState <= valid_1;
 				ELSIF (rxData /= rxData_reg) and ((rxData = "00110000") OR (rxData = "00110001") OR (rxData = "00110010") OR (rxData = "00110011") OR (rxData = "00110100") OR (rxData = "00110101") OR (rxData = "00110110") OR (rxData = "00110111") OR (rxData = "00111000") OR (rxData = "00111001")) THEN
 					numWords_bcd(1) <= rxData(3 downto 0);
-					rxDone <= '1';
+					v_rxDone := '1';
 					nextState <= valid_2;
 				ELSIF (rxData = "01000001") or (rxData = "01100001") THEN
-					rxDone <= '1';
+					v_rxDone := '1';
 					nextState <= valid_A;
 				ELSE
 					nextState <= INIT;
@@ -131,27 +132,31 @@ begin
 					nextState <= valid_2;
 				ELSIF (rxData /= rxData_reg) and ((rxData = "00110000") OR (rxData = "00110001") OR (rxData = "00110010") OR (rxData = "00110011") OR (rxData = "00110100") OR (rxData = "00110101") OR (rxData = "00110110") OR (rxData = "00110111") OR (rxData = "00111000") OR (rxData = "00111001")) THEN
 					numWords_bcd(0) <= rxData(3 downto 0);
-					rxDone <= '1';
-					nextState <= TRANSMIT_putty_n;
+					v_rxDone := '1';
+					nextState <= putty_n;
 				ELSIF (rxData = "01000001") or (rxData = "01100001") THEN
-					rxDone <= '1';
+					v_rxDone := '1';
 					nextState <= valid_A;
 				ELSE
 					nextState <= INIT;
 				END IF;
 				
 			-- Breaks line feed & return new line (given valid commands)
-			WHEN TRANSMIT_putty_n =>
-				nextState <= putty_n;
+--			WHEN TRANSMIT_putty_n =>
+--				nextState <= putty_n;
 			WHEN putty_n =>
+				v_txNow := '1';
+				v_rxDone := '1';
 				IF (txdone = '1') then
-					nextState <= TRANSMIT_putty_r;
+					nextState <= putty_r;
 				else
 					nextState <= putty_n;
 				END IF;
-			WHEN TRANSMIT_putty_r =>
-				nextState <= putty_r;
+--			WHEN TRANSMIT_putty_r =>
+--				nextState <= putty_r;
 			WHEN putty_r =>
+				v_txNow := '1';
+				v_rxDone := '1';
 				IF (txdone = '1') then
 					nextState <= cmd_ANNN_seqDone;
 				else
@@ -160,12 +165,14 @@ begin
 					
 			WHEN cmd_ANNN_SeqDone =>
 				IF (seqDone = '0') THEN
-					nextState <= TRANSMIT_Tx_byte;
+					nextState <= TRANSMIT_Tx_byte;--cmd_ANNN_runPush;
 				ELSE
 					nextState <= cmd_ANNN_outputty;
 				END IF;
 			
 			when TRANSMIT_Tx_byte =>
+				v_txNow := '1';
+				v_rxDone := '1';
 				nextState <= cmd_ANNN_runPush;
 				
 			WHEN cmd_ANNN_runPush =>
@@ -181,15 +188,17 @@ begin
 			WHEN OTHERS => 
 				nextState <= INIT;
 		END CASE;
+		rxDone <= v_rxDone;
+		txNow <= v_txNow;
 	END PROCESS; -- combi_nextState
 	-----------------------------------------------------
-	set_TXRX: PROCESS(curState)
-	BEGIN
-		IF (curState = TRANSMIT_putty_n) or (curState = TRANSMIT_putty_r) or (curState = TRANSMIT_Tx_byte) THEN
-			txNow <= '1';
-			rxDone <= '1';
-		END IF;
-	END PROCESS;
+--	set_TXRX: PROCESS(curState)
+--	BEGIN
+--		IF (curState = TRANSMIT_putty_n) or (curState = TRANSMIT_putty_r) or (curState = TRANSMIT_Tx_byte) THEN
+--			txNow <= '1';
+--			rxDone <= '1';
+--		END IF;
+--	END PROCESS;
 	-----------------------------------------------------
 --	echo: PROCESS(rxData, curState, txdone, rxData)
 --	BEGIN
@@ -200,24 +209,25 @@ begin
 --	-----------------------------------------------------
 	proc_ANNN_pushSTART: PROCESS(curState, seqDone)
 	BEGIN
+		start <= '0';
 		IF (curState = cmd_ANNN_SeqDone) and (seqDone = '0') THEN
 			start <= '1';
 		END IF;
 	END PROCESS;
 	-----------------------------------------------------
-	proc_ANNN_pushTX: PROCESS(curState, dataReady, byte)
+	proc_ANNN_pushTX: PROCESS(curState, txdone, byte)--, dataReady)
 	BEGIN
-		IF (curState = cmd_ANNN_runPush) then
+		IF (curState = cmd_ANNN_runPush) and (txdone = '1') then -- and (dataReady = '1') then
 			txdata <= byte; -- Outputs byte to screen (currently in dev)
 		END IF;
 	END PROCESS;
 	-----------------------------------------------------
 	putty_NR: PROCESS(rxData, curState, txdone, rxData)
 	BEGIN
-		IF (txdone /= '0') THEN
-			if (curState /= putty_n) THEN
+		IF (txdone = '1') THEN
+			if (curState = putty_n) THEN
 				txdata <= "00001010"; -- Prints ASCII
-			ELSIF (curState /= putty_r) THEN
+			ELSIF (curState = putty_r) THEN
 				txdata <= "00001101";
 			END IF;
 		END IF;
