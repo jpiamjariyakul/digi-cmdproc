@@ -1,0 +1,8 @@
+Vivado Simulator 2018.2
+Copyright 1986-1999, 2001-2018 Xilinx, Inc. All Rights Reserved.
+Running: C:/Xilinx/Vivado/2018.2/bin/unwrapped/win64.o/xelab.exe -wto 39fbb74f0afe4409b2dcdca60c3a32ca --incr --debug typical --relax --mt 2 -L xil_defaultlib -L secureip --snapshot tb_cmdProc_interim_behav xil_defaultlib.tb_cmdProc_interim -log elaborate.log 
+Using 2 slave threads.
+Starting static elaboration
+WARNING: [VRFC 10-122] cmdproc_synthesised remains a black-box since it has no binding entity [C:/Users/sv17657/OneDrive - University of Bristol/DigiDesProject/digi-cmdproc-interim/Vivado/cmdProcWrapper.vhd:93]
+Completed static elaboration
+INFO: [XSIM 43-4323] No Change in HDL. Linking previously generated obj files to create kernel

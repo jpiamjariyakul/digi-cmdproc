@@ -1,0 +1,13 @@
+# compile vhdl design source files
+vhdl xil_defaultlib  \
+"../../../../190302_digi_cmd_interim_01.srcs/sources_1/imports/190302_digi_cmd_interim_01/UART_RX_CTRL.vhd" \
+"../../../../190302_digi_cmd_interim_01.srcs/sources_1/imports/190302_digi_cmd_interim_01/UART_TX_CTRL.vhd" \
+"../../../../190302_digi_cmd_interim_01.srcs/sources_1/imports/190302_digi_cmd_interim_01/common_pack.vhd" \
+"../../../../cmdProcWrapper.vhd" \
+"../../../../190302_digi_cmd_interim_01.srcs/sources_1/imports/190302_digi_cmd_interim_01/dataConsumeWrapper.vhd" \
+"../../../../190302_digi_cmd_interim_01.srcs/sources_1/imports/190302_digi_cmd_interim_01/dataConsume_synthesised_unsigned.vhd" \
+"../../../../190302_digi_cmd_interim_01.srcs/sources_1/imports/190302_digi_cmd_interim_01/dataGen.vhd" \
+"../../../../190302_digi_cmd_interim_01.srcs/sources_1/imports/190302_digi_cmd_interim_01/tb_CmdProcessor_Interim.vhd" \
+
+# Do not sort compile order
+nosort

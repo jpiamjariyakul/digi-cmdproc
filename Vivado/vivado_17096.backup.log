@@ -1,0 +1,24 @@
+#-----------------------------------------------------------
+# Vivado v2018.2 (64-bit)
+# SW Build 2258646 on Thu Jun 14 20:03:12 MDT 2018
+# IP Build 2256618 on Thu Jun 14 22:10:49 MDT 2018
+# Start of session at: Tue Mar 12 20:26:06 2019
+# Process ID: 17096
+# Current directory: C:/Users/sv17657/OneDrive - University of Bristol/DigiDesProject/digi-cmdproc-interim/Vivado
+# Command line: vivado.exe -gui_launcher_event rodinguilauncherevent6044 C:\Users\sv17657\OneDrive - University of Bristol\DigiDesProject\digi-cmdproc-interim\Vivado\190302_digi_cmd_interim_01.xpr
+# Log file: C:/Users/sv17657/OneDrive - University of Bristol/DigiDesProject/digi-cmdproc-interim/Vivado/vivado.log
+# Journal file: C:/Users/sv17657/OneDrive - University of Bristol/DigiDesProject/digi-cmdproc-interim/Vivado\vivado.jou
+#-----------------------------------------------------------
+start_guiooopen_project {C:/Users/sv17657/OneDrive - University of Bristol/DigiDesProject/digi-cmdproc-interim/Vivado/190302_digi_cmd_interim_01.xpr}
+INFO: [ProjectBase 1-489] The host OS only allows 260 characters in a normal path. The project is stored in a path with more than 80 characters. If you experience issues with IP, Block Designs, or files not being found, please consider moving the project to a location with a shorter path. Alternately consider using the OS subst command to map part of the path to a drive letter.
+Current project path is 'C:/Users/sv17657/OneDrive - University of Bristol/DigiDesProject/digi-cmdproc-interim/VivadoScScanning sources..FiFinished scanning sourceWWARNING: [filemgmt 56-3] IPUserFilesDir: Could not find the directory 'C:/Users/exit
+INFO: [Common 17-206] Exiting Vivado at Tue Mar 12 20:40:50 2019...
+rim/Vivado/190302_digi_cmd_interim_01.ip_user_files'.IIINFO: [IP_Flow 19-234] Refreshing IP repositories
+INFO: [IP_Flow 19-1704] No user IP repositories specifieINFO: [IP_Flow 19-2313] Loaded Vivado IP repository 'C:/Xilinx/Vivado/2018.2/data/ip'.
+ERopen_project: Time (s): cpu = 00:00:15 ; elapsed = 00:00:21 . Memory (MB): peak = 803.590 ; gain = 126.426
+update_compile_order -fileset sources_1
+exit
+INFexit
+INFO: [Common 17-206] Exiting Vivado at Tue Mar 12 20:40:59 2019...
+
+
