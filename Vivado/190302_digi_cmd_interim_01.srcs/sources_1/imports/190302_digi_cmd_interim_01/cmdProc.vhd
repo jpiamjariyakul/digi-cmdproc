@@ -70,7 +70,7 @@ begin
 	PROCESS (clk, curState, seqDone)--, dataResults, maxIndex)
 	BEGIN
 		IF clk'EVENT AND clk = '1' THEN
-			IF ((curState = TRANSMIT_putty_n) or (curState = putty_n) or (curState = TRANSMIT_putty_r) or (curState = putty_r) or (curState = cmd_ANNN_seqDone) or (curState = cmd_ANNN_runPush) or (curState = TRANSMIT_Tx_byte) or (curState = cmd_ANNN_outputty)) and (seqDone = '1') THEN -- 0
+			IF (seqDone = '1') THEN -- 0
 				processed <= '1';
 			END IF;
 		END IF;
@@ -85,13 +85,16 @@ begin
 		END IF;
 	END PROCESS; -- seq
 	-----------------------------------------------------
-	combi_nextState : PROCESS (curState, rxNow, rxData, rxData_reg, processed, seqDone, txDone) --, count_byte, num_bcd, bcd_integer, bcd_2, bcd_1, bcd_0)
-		variable v_rxDone, v_txNow: std_logic; -- variable for rxDone
+	combi_nextState : PROCESS (curState, rxNow, rxData, rxData_reg, processed, processed, txDone, dataReady, byte) --, count_byte, num_bcd, bcd_integer, bcd_2, bcd_1, bcd_0)
+		variable v_rxDone, v_txNow, v_start: std_logic; -- variable for rxDone
+		variable v_dataTx: std_logic_vector(7 downto 0);
 	BEGIN
 		-- assign defaults at the beginning to avoid having to assign in every branch
 		--txDone := '0';
 		v_rxDone := '0'; -- Default value of rxDone
 		v_txNow := '0';
+		v_start := '0';
+		v_dataTx := byte;
 		CASE curState IS
 			WHEN INIT => --(sig_rxNow = '1') and 
 				IF (rxNow = '1') and ((rxData = "01000001") or (rxData = "01100001")) THEN
@@ -133,6 +136,7 @@ begin
 				ELSIF (rxData /= rxData_reg) and ((rxData = "00110000") OR (rxData = "00110001") OR (rxData = "00110010") OR (rxData = "00110011") OR (rxData = "00110100") OR (rxData = "00110101") OR (rxData = "00110110") OR (rxData = "00110111") OR (rxData = "00111000") OR (rxData = "00111001")) THEN
 					numWords_bcd(0) <= rxData(3 downto 0);
 					v_rxDone := '1';
+					--processed <= '0';
 					nextState <= putty_n;
 				ELSIF (rxData = "01000001") or (rxData = "01100001") THEN
 					v_rxDone := '1';
@@ -147,6 +151,7 @@ begin
 			WHEN putty_n =>
 				v_txNow := '1';
 				v_rxDone := '1';
+				v_dataTx := "00001010";
 				IF (txdone = '1') then
 					nextState <= putty_r;
 				else
@@ -157,6 +162,7 @@ begin
 			WHEN putty_r =>
 				v_txNow := '1';
 				v_rxDone := '1';
+				v_dataTx := "00001101";
 				IF (txdone = '1') then
 					nextState <= cmd_ANNN_seqDone;
 				else
@@ -164,32 +170,40 @@ begin
 				END IF;
 					
 			WHEN cmd_ANNN_SeqDone =>
-				IF (seqDone = '0') THEN
-					nextState <= TRANSMIT_Tx_byte;--cmd_ANNN_runPush;
+				IF (processed = '0') THEN
+					v_start := '1';
+					v_txNow := '1';
+					v_rxDone := '1';
+					nextState <= cmd_ANNN_runPush;
 				ELSE
 					nextState <= cmd_ANNN_outputty;
 				END IF;
 			
-			when TRANSMIT_Tx_byte =>
-				v_txNow := '1';
-				v_rxDone := '1';
-				nextState <= cmd_ANNN_runPush;
+--			when TRANSMIT_Tx_byte =>
+--				v_txNow := '1';
+--				v_rxDone := '1';
+--				nextState <= cmd_ANNN_runPush;
 				
 			WHEN cmd_ANNN_runPush =>
 				IF (txdone = '1') then
 					nextState <= cmd_ANNN_seqDone;
-				else
+				ELSE
 					nextState <= cmd_ANNN_runPush;
-				end if;
+				END IF;
 				
 			WHEN cmd_ANNN_outputty =>
+				-- TODO: Add code
 				nextState <= INIT;
 			---------------------------------
 			WHEN OTHERS => 
 				nextState <= INIT;
 		END CASE;
+		start <= v_start;
 		rxDone <= v_rxDone;
 		txNow <= v_txNow;
+		IF (dataReady = '1') then
+			txdata <= v_dataTx;
+		END IF;
 	END PROCESS; -- combi_nextState
 	-----------------------------------------------------
 --	set_TXRX: PROCESS(curState)
@@ -207,30 +221,30 @@ begin
 --		END IF;
 --	END PROCESS;
 --	-----------------------------------------------------
-	proc_ANNN_pushSTART: PROCESS(curState, seqDone)
-	BEGIN
-		start <= '0';
-		IF (curState = cmd_ANNN_SeqDone) and (seqDone = '0') THEN
-			start <= '1';
-		END IF;
-	END PROCESS;
+--	proc_ANNN_pushSTART: PROCESS(curState, seqDone)
+--	BEGIN
+--		start <= '0';
+--		IF (curState = cmd_ANNN_SeqDone) and (seqDone = '0') THEN
+--			start <= '1';
+--		END IF;
+--	END PROCESS;
 	-----------------------------------------------------
-	proc_ANNN_pushTX: PROCESS(curState, txdone, byte)--, dataReady)
-	BEGIN
-		IF (curState = cmd_ANNN_runPush) and (txdone = '1') then -- and (dataReady = '1') then
-			txdata <= byte; -- Outputs byte to screen (currently in dev)
-		END IF;
-	END PROCESS;
+--	proc_ANNN_pushTX: PROCESS(curState, txdone, byte, dataReady)--, dataReady)
+--	BEGIN
+--		IF (curState = cmd_ANNN_runPush) and (txdone = '1') THEN -- and (dataReady = '1') then
+--			txdata <= byte; -- Outputs byte to screen (currently in dev)
+--		END IF;
+--	END PROCESS;
 	-----------------------------------------------------
-	putty_NR: PROCESS(rxData, curState, txdone, rxData)
-	BEGIN
-		IF (txdone = '1') THEN
-			if (curState = putty_n) THEN
-				txdata <= "00001010"; -- Prints ASCII
-			ELSIF (curState = putty_r) THEN
-				txdata <= "00001101";
-			END IF;
-		END IF;
-	END PROCESS;
+--	putty_NR: PROCESS(rxData, curState, txdone, rxData)
+--	BEGIN
+--		IF (txdone = '1') THEN
+--			if (curState = putty_n) THEN
+--				txdata <= "00001010"; -- Prints ASCII
+--			ELSIF (curState = putty_r) THEN
+--				txdata <= "00001101";
+--			END IF;
+--		END IF;
+--	END PROCESS;
 	-----------------------------------------------------    
 end cmdProc_behav;
