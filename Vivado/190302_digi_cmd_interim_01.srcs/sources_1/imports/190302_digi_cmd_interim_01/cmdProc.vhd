@@ -59,6 +59,8 @@ architecture cmdProc_behav of cmdProc is
 --	SIGNAL num_bcd: BCD_ARRAY_TYPE(2 downto 0) := ("0000", "0000", "0000"); -- Stores the same value as numWords_bcd, but can be read
 	SIGNAL ANNN_dataResults: char_array_type(56 downto 0);
 	SIGNAL ANNN_indexMax: BCD_ARRAY_TYPE(2 downto 0);
+	SIGNAL v_rxDone, v_txNow, v_start: std_logic;
+	SIGNAL v_dataTx: std_logic_vector(7 downto 0);
 begin
 	-- 190310: IDEA - instead of using processed FF, output invalid data instead?
 	-- 190311:	Sequence working! (sans L & P)
@@ -92,19 +94,19 @@ begin
 	END PROCESS; -- seq
 	-----------------------------------------------------
 	combi_nextState : PROCESS (curState, rxNow, rxData, rxData_reg, processed, processed, txDone, dataReady, byte) --, count_byte, num_bcd, bcd_integer, bcd_2, bcd_1, bcd_0)
-		variable v_rxDone, v_txNow, v_start: std_logic; -- variable for rxDone
-		variable v_dataTx: std_logic_vector(7 downto 0);
+		--variable v_rxDone, v_txNow, v_start: std_logic; -- variable for rxDone
+		--variable v_dataTx: std_logic_vector(7 downto 0);
 	BEGIN
 		-- assign defaults at the beginning to avoid having to assign in every branch
 		--txDone := '0';
-		v_rxDone := '0'; -- Default value of rxDone
-		v_txNow := '0';
-		v_start := '0';
-		v_dataTx := byte;
+		v_rxDone <= '0'; -- Default value of rxDone
+		v_txNow <= '0';
+		v_start <= '0';
+		v_dataTx <= byte;
 		CASE curState IS
 			WHEN INIT => --(sig_rxNow = '1') and 
 				IF (rxNow = '1') and ((rxData = "01000001") or (rxData = "01100001")) THEN
-					v_rxDone := '1';
+					v_rxDone <= '1';
 					nextState <= valid_A;
 				ELSE
 					nextState <= INIT;
@@ -119,10 +121,10 @@ begin
 				        (rxData = "00111000") OR (rxData = "00111001")
 				        ) THEN
 					numWords_bcd(2) <= rxData(3 downto 0);
-					v_rxDone := '1';
+					v_rxDone <= '1';
 					nextState <= valid_1;
 				ELSIF (rxData = "01000001") or (rxData = "01100001") THEN
-					v_rxDone := '1';
+					v_rxDone <= '1';
 					nextState <= valid_A;
 				ELSE
 					nextState <= INIT;
@@ -139,10 +141,10 @@ begin
 				        (rxData = "00111000") OR (rxData = "00111001")
 				        ) THEN
 					numWords_bcd(1) <= rxData(3 downto 0);
-					v_rxDone := '1';
+					v_rxDone <= '1';
 					nextState <= valid_2;
 				ELSIF (rxData = "01000001") or (rxData = "01100001") THEN
-					v_rxDone := '1';
+					v_rxDone <= '1';
 					nextState <= valid_A;
 				ELSE
 					nextState <= INIT;
@@ -159,34 +161,36 @@ begin
 				        (rxData = "00111000") OR (rxData = "00111001")
 				        ) THEN
 					numWords_bcd(0) <= rxData(3 downto 0);
-					v_rxDone := '1';
+					v_rxDone <= '1';
 					--processed <= '0';
-					nextState <= putty_n;
+					nextState <= TRANSMIT_putty_n;
 				ELSIF (rxData = "01000001") or (rxData = "01100001") THEN
-					v_rxDone := '1';
+					v_rxDone <= '1';
 					nextState <= valid_A;
 				ELSE
 					nextState <= INIT;
 				END IF;
 				
 			-- Breaks line feed & return new line (given valid commands)
---			WHEN TRANSMIT_putty_n =>
---				nextState <= putty_n;
+			WHEN TRANSMIT_putty_n =>
+                v_txNow <= '1';
+                v_rxDone <= '1';
+				nextState <= putty_n;
+				
 			WHEN putty_n =>
-				v_txNow := '1';
-				v_rxDone := '1';
-				v_dataTx := "00001010";
+				v_dataTx <= "00001010";
 				IF (txdone = '1') then
-					nextState <= putty_r;
+					nextState <= TRANSMIT_putty_r;
 				else
 					nextState <= putty_n;
 				END IF;
---			WHEN TRANSMIT_putty_r =>
---				nextState <= putty_r;
+			WHEN TRANSMIT_putty_r =>
+                v_txNow <= '1';
+                v_rxDone <= '1';
+				nextState <= putty_r;
+				
 			WHEN putty_r =>
-				--v_txNow := '1';
-				v_rxDone := '1';
-				v_dataTx := "00001101";
+				v_dataTx <= "00001101";
 				IF (txdone = '1') then
 					nextState <= cmd_ANNN_seqDone;
 				else
@@ -195,8 +199,8 @@ begin
 					
 			WHEN cmd_ANNN_SeqDone =>
 				IF (processed = '0') THEN
-					v_start := '1';
-					v_rxDone := '1';
+					v_start <= '1';
+					v_rxDone <= '1';
 					nextState <= cmd_ANNN_buffer; --cmd_ANNN_runPush;
 				ELSE
 					nextState <= cmd_ANNN_outputty;
@@ -208,7 +212,7 @@ begin
 --				nextState <= cmd_ANNN_runPush;
 			WHEN cmd_ANNN_buffer =>
 			     IF (txDone = '0') then
-			         v_txNow := '1';
+			         v_txNow <= '1';
                      nextState <= cmd_ANNN_runPush;
                  else
                         nextState <= cmd_ANNN_buffer;
