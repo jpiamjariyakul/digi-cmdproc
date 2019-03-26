@@ -42,21 +42,26 @@ end cmdProc;
 -- 190304: Added arch - TBC
 architecture cmdProc_behav of cmdProc is
 -- Component declaration of dataConsume
-    TYPE state_type IS (INIT, valid_A, valid_1, valid_2, TRANSMIT_putty_n, putty_n, TRANSMIT_putty_r, putty_r, cmd_ANNN_seqDone, cmd_ANNN_runPush, TRANSMIT_Tx_byte, cmd_ANNN_outputty); -- List your states here 
+    TYPE state_type IS (INIT, valid_A, valid_1, valid_2, 
+    	putty_n_wait, putty_n_txNow, putty_r_wait, putty_r_txNow, 
+    	putty_nr_wait, putty_nr_txnow,
+    	cmd_ANNN_seqDone, cmd_ANNN_runPush, TRANSMIT_Tx_byte, cmd_ANNN_outputty,
+    	cmd_ANNN_wait, cmd_ANNN_data, cmd_ANNN_txNow); -- List your states here 
 	SIGNAL curState, nextState : state_type;
-	SIGNAL processed : BIT; -- registered input signal
+	SIGNAL processed : std_logic; -- registered input signal
 	SIGNAL rxData_reg, data_gen: std_logic_vector(7 downto 0); -- Stores rxData into FF
 	--SIGNAL num1, num2, num3: std_logic_vector(7 downto 0); --  Stores numbers inputted
 --	SIGNAL en_count_byte: BIT; -- ENABLE input for counter 
 --	SIGNAL count_byte: INTEGER := 0; --BCD_ARRAY_TYPE(2 downto 0):= ("0000", "0000", "0000"); -- counter integers for bytes retrieved
 --	SIGNAL bcd_integer, bcd_2, bcd_1, bcd_0: INTEGER; -- Equivalent integer
 --	SIGNAL num_bcd: BCD_ARRAY_TYPE(2 downto 0) := ("0000", "0000", "0000"); -- Stores the same value as numWords_bcd, but can be read
+	SIGNAL count: INTEGER := 0;
+	SIGNAL en_count : std_logic; -- ENABLE inputs for counter 
 	SIGNAL ANNN_dataResults: char_array_type(56 downto 0);
 	SIGNAL ANNN_indexMax: BCD_ARRAY_TYPE(2 downto 0);
 begin
 	-- 190310: IDEA - instead of using processed FF, output invalid data instead?
 	-- 190311:	Sequence working! (sans L & P)
-	
 	-- FF for storing incoming rxData - used in checking for next clock cycle whether same data
 	PROCESS (clk, rxData)
 	BEGIN
@@ -85,7 +90,8 @@ begin
 		END IF;
 	END PROCESS; -- seq
 	-----------------------------------------------------
-	combi_nextState : PROCESS (curState, rxNow, rxData, rxData_reg, processed, processed, txDone, dataReady, byte) --, count_byte, num_bcd, bcd_integer, bcd_2, bcd_1, bcd_0)
+	combi_nextState : PROCESS (curState, rxNow, rxData, rxData_reg, 
+			processed, processed, txDone, dataReady, byte, count) --, count_byte, num_bcd, bcd_integer, bcd_2, bcd_1, bcd_0)
 		variable v_rxDone, v_txNow, v_start: std_logic; -- variable for rxDone
 		variable v_dataTx: std_logic_vector(7 downto 0);
 	BEGIN
@@ -137,59 +143,143 @@ begin
 					numWords_bcd(0) <= rxData(3 downto 0);
 					v_rxDone := '1';
 					--processed <= '0';
-					nextState <= putty_n;
+					nextState <= putty_n_wait;--cmd_ANNN_txNow;
 				ELSIF (rxData = "01000001") or (rxData = "01100001") THEN
 					v_rxDone := '1';
 					nextState <= valid_A;
 				ELSE
 					nextState <= INIT;
 				END IF;
+			---------------------------------------
+			WHEN putty_n_wait =>
+				IF (txdone = '1') then
+					nextState <= putty_n_txnow;
+				else
+					nextState <= putty_n_wait;
+				END IF;
+			WHEN putty_n_txnow =>
+				v_dataTx := "00001010";
+				IF (txdone = '1') then
+					v_txNow := '1';
+					nextState <= putty_r_wait;
+				ELSE
+					nextState <= putty_n_txnow;
+				END IF;
+			WHEN putty_r_wait =>
+				IF (txdone = '1') then
+					nextState <= putty_r_txnow;
+				else
+					nextState <= putty_r_wait;
+				END IF;
+			WHEN putty_r_txnow =>
+				v_dataTx := "00001101";
+				IF (txdone = '1') then
+					v_txNow := '1';
+					nextState <= cmd_ANNN_wait;
+				ELSE
+					nextState <= putty_r_txnow;
+				END IF;
+--			WHEN putty_nr_wait =>
+--				IF (txdone = '1') then
+--					nextState <= putty_nr_txnow;
+--				ELSE
+--					nextState <= putty_nr_wait;
+--				END IF;
+
+--			WHEN putty_nr_txnow =>
+--				v_dataTx := "00001010";
+--				IF (count > 2) THEN
+--				--ELSE
+--					v_dataTx := "00001101";
+--				END IF;
+--				IF (txdone = '1') then
+--					v_txNow := '1';
+--					IF (count >= 2) then
+--						nextState <= cmd_ANNN_wait;
+--					else
+--						nextState <= putty_nr_wait;
+--					end if;
+--				ELSE
+--					nextState <= putty_nr_txnow;
+--				END IF;
 				
+			---------------------------------------
+			
 			-- Breaks line feed & return new line (given valid commands)
 --			WHEN TRANSMIT_putty_n =>
 --				nextState <= putty_n;
-			WHEN putty_n =>
-				v_txNow := '1';
-				v_rxDone := '1';
-				v_dataTx := "00001010";
+--			WHEN putty_n =>
+--				v_txNow := '1';
+--				v_rxDone := '1';
+--				v_dataTx := "00001010";
+--				IF (txdone = '1') then
+--					nextState <= putty_r;
+--				else
+--					nextState <= putty_n;
+--				END IF;
+----			WHEN TRANSMIT_putty_r =>
+----				nextState <= putty_r;
+--			WHEN putty_r =>
+--				v_txNow := '1';
+--				v_rxDone := '1';
+--				v_dataTx := "00001101";
+--				IF (txdone = '1') then
+--					nextState <= cmd_ANNN_seqDone;
+--				else
+--					nextState <= putty_r;
+--				END IF;
+
+			WHEN cmd_ANNN_wait =>
 				IF (txdone = '1') then
-					nextState <= putty_r;
-				else
-					nextState <= putty_n;
-				END IF;
---			WHEN TRANSMIT_putty_r =>
---				nextState <= putty_r;
-			WHEN putty_r =>
-				v_txNow := '1';
-				v_rxDone := '1';
-				v_dataTx := "00001101";
-				IF (txdone = '1') then
-					nextState <= cmd_ANNN_seqDone;
-				else
-					nextState <= putty_r;
-				END IF;
-					
-			WHEN cmd_ANNN_SeqDone =>
-				IF (processed = '0') THEN
 					v_start := '1';
+					nextState <= cmd_ANNN_data;
+				else
+					nextState <= cmd_ANNN_wait;
+				END IF;
+				
+			WHEN cmd_ANNN_data =>
+				IF (dataReady = '1') THEN
+					nextState <= cmd_ANNN_txNow;
+				ELSE
+					nextState <= cmd_ANNN_data;
+				END IF;				
+			
+			WHEN cmd_ANNN_txNow =>
+				IF (txdone = '1') THEN
 					v_txNow := '1';
-					v_rxDone := '1';
 					nextState <= cmd_ANNN_runPush;
 				ELSE
-					nextState <= cmd_ANNN_outputty;
+					nextState <= cmd_ANNN_txNow;
 				END IF;
+					
+			WHEN cmd_ANNN_runPush =>
+				IF (txdone = '1') then
+					nextState <= cmd_ANNN_wait;
+				ELSE
+					nextState <= cmd_ANNN_runPush;
+				END IF;
+			
+--			WHEN cmd_ANNN_SeqDone =>
+--				IF (processed = '0') THEN
+--					v_start := '1';
+--					v_txNow := '1';
+--					v_rxDone := '1';
+--					nextState <= cmd_ANNN_runPush;
+--				ELSE
+--					nextState <= cmd_ANNN_outputty;
+--				END IF;
 			
 --			when TRANSMIT_Tx_byte =>
 --				v_txNow := '1';
 --				v_rxDone := '1';
 --				nextState <= cmd_ANNN_runPush;
 				
-			WHEN cmd_ANNN_runPush =>
-				IF (txdone = '1') then
-					nextState <= cmd_ANNN_seqDone;
-				ELSE
-					nextState <= cmd_ANNN_runPush;
-				END IF;
+--			WHEN cmd_ANNN_runPush =>
+--				IF (txdone = '1') then
+--					nextState <= cmd_ANNN_seqDone;
+--				ELSE
+--					nextState <= cmd_ANNN_runPush;
+--				END IF;
 				
 			WHEN cmd_ANNN_outputty =>
 				-- TODO: Add code
@@ -201,11 +291,18 @@ begin
 		start <= v_start;
 		rxDone <= v_rxDone;
 		txNow <= v_txNow;
-		IF (dataReady = '1') then
+		--IF (dataReady = '1') or (curState = putty_n_txnow) or (curState = putty_n_txnow) then
 			txdata <= v_dataTx;
-		END IF;
+		--END IF;
 	END PROCESS; -- combi_nextState
 	-----------------------------------------------------
+	
+--	PROCESS(curState, dataReady, TxDone)
+--	BEGIN
+--		IF (curState = ) and (dataReady = '1') and (txdone = '1') then
+--			txdata <= v_dataTx;
+--		END IF;
+--	END PROCESS:
 --	set_TXRX: PROCESS(curState)
 --	BEGIN
 --		IF (curState = TRANSMIT_putty_n) or (curState = TRANSMIT_putty_r) or (curState = TRANSMIT_Tx_byte) THEN
@@ -246,5 +343,28 @@ begin
 --			END IF;
 --		END IF;
 --	END PROCESS;
-	-----------------------------------------------------    
+	-----------------------------------------------------
+	-- Counter for 0s
+--	counter : PROCESS (reset, clk, en_count, curState)
+--	BEGIN
+--		IF reset = '0' THEN -- active high reset
+--			count <= 0;
+--		ELSIF clk'EVENT AND clk = '1' THEN
+--			IF en_count = '1' THEN
+--				-- Counter for 1s only counts in bit_1s state & when registered input is 1
+--				count <= count + 1;
+--			ELSE
+--				-- Counter resets to 0 when registered input is not 1
+--				count <= 0;
+--			END IF;
+--		END IF;
+--	END PROCESS;
+	
+--	enable : PROCESS (reset, clk)
+--	BEGIN
+--		en_count <= '0'; -- assign default value
+--		IF (curState = putty_nr_txnow) THEN -- Outputs if counter of 1s are 17 in total (from 0 to 16)
+--			en_count <= '1';
+--		END IF;
+--	END PROCESS;
 end cmdProc_behav;

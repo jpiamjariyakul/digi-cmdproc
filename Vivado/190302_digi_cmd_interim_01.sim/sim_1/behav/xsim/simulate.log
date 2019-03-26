@@ -1,0 +1,29 @@
+Vivado Simulator 2018.3
+Time resolution is 1 ps
+Note: =====Process of Sequence No.1 starts.
+Time: 5832255 ns  Iteration: 2  Process: /tb_cmdProc_interim/byteCounter  File: C:/Users/jpiam/Documents/GitHub/digi-cmdproc-interim/Vivado/190302_digi_cmd_interim_01.srcs/sources_1/imports/190302_digi_cmd_interim_01/tb_CmdProcessor_Interim.vhd
+Note: =====Process of Sequence No.2 starts.
+Time: 6873955 ns  Iteration: 3  Process: /tb_cmdProc_interim/byteCounter  File: C:/Users/jpiam/Documents/GitHub/digi-cmdproc-interim/Vivado/190302_digi_cmd_interim_01.srcs/sources_1/imports/190302_digi_cmd_interim_01/tb_CmdProcessor_Interim.vhd
+Error: txData is 10010101; while byte(1) character(1) should be 00111001
+Time: 6874005 ns  Iteration: 2  Process: /tb_cmdProc_interim/checkByte  File: C:/Users/jpiam/Documents/GitHub/digi-cmdproc-interim/Vivado/190302_digi_cmd_interim_01.srcs/sources_1/imports/190302_digi_cmd_interim_01/tb_CmdProcessor_Interim.vhd
+Error: txData is 00010011; while byte(1) character(2) should be 00110101
+Time: 7915775 ns  Iteration: 2  Process: /tb_cmdProc_interim/checkByte  File: C:/Users/jpiam/Documents/GitHub/digi-cmdproc-interim/Vivado/190302_digi_cmd_interim_01.srcs/sources_1/imports/190302_digi_cmd_interim_01/tb_CmdProcessor_Interim.vhd
+Error: txData is 00001001; while byte(2) character(1) should be 00110001
+Time: 9999315 ns  Iteration: 2  Process: /tb_cmdProc_interim/checkByte  File: C:/Users/jpiam/Documents/GitHub/digi-cmdproc-interim/Vivado/190302_digi_cmd_interim_01.srcs/sources_1/imports/190302_digi_cmd_interim_01/tb_CmdProcessor_Interim.vhd
+Error: txData is 01101000; while byte(2) character(2) should be 00110011
+Time: 11041085 ns  Iteration: 2  Process: /tb_cmdProc_interim/checkByte  File: C:/Users/jpiam/Documents/GitHub/digi-cmdproc-interim/Vivado/190302_digi_cmd_interim_01.srcs/sources_1/imports/190302_digi_cmd_interim_01/tb_CmdProcessor_Interim.vhd
+Error: txData is 10010011; while byte(3) character(1) should be 00110110
+Time: 13124625 ns  Iteration: 2  Process: /tb_cmdProc_interim/checkByte  File: C:/Users/jpiam/Documents/GitHub/digi-cmdproc-interim/Vivado/190302_digi_cmd_interim_01.srcs/sources_1/imports/190302_digi_cmd_interim_01/tb_CmdProcessor_Interim.vhd
+Error: txData is 11111001; while byte(3) character(2) should be 00110000
+Time: 14166395 ns  Iteration: 2  Process: /tb_cmdProc_interim/checkByte  File: C:/Users/jpiam/Documents/GitHub/digi-cmdproc-interim/Vivado/190302_digi_cmd_interim_01.srcs/sources_1/imports/190302_digi_cmd_interim_01/tb_CmdProcessor_Interim.vhd
+Error: txData is 11000111; while byte(4) character(1) should be 00110000
+Time: 16249935 ns  Iteration: 2  Process: /tb_cmdProc_interim/checkByte  File: C:/Users/jpiam/Documents/GitHub/digi-cmdproc-interim/Vivado/190302_digi_cmd_interim_01.srcs/sources_1/imports/190302_digi_cmd_interim_01/tb_CmdProcessor_Interim.vhd
+Error: txData is 10010010; while byte(4) character(2) should be 00111001
+Time: 17291705 ns  Iteration: 2  Process: /tb_cmdProc_interim/checkByte  File: C:/Users/jpiam/Documents/GitHub/digi-cmdproc-interim/Vivado/190302_digi_cmd_interim_01.srcs/sources_1/imports/190302_digi_cmd_interim_01/tb_CmdProcessor_Interim.vhd
+Note: =====Process of Sequence No.2 is done.
+Time: 18333475100 ps  Iteration: 4  Process: /tb_cmdProc_interim/byteCounter  File: C:/Users/jpiam/Documents/GitHub/digi-cmdproc-interim/Vivado/190302_digi_cmd_interim_01.srcs/sources_1/imports/190302_digi_cmd_interim_01/tb_CmdProcessor_Interim.vhd
+Note: =====A total of 12 bytes has been processed; 
+Time: 18333475100 ps  Iteration: 4  Process: /tb_cmdProc_interim/byteCounter  File: C:/Users/jpiam/Documents/GitHub/digi-cmdproc-interim/Vivado/190302_digi_cmd_interim_01.srcs/sources_1/imports/190302_digi_cmd_interim_01/tb_CmdProcessor_Interim.vhd
+Note: =====Process of Sequence No.3 starts.
+Time: 19375195 ns  Iteration: 2  Process: /tb_cmdProc_interim/byteCounter  File: C:/Users/jpiam/Documents/GitHub/digi-cmdproc-interim/Vivado/190302_digi_cmd_interim_01.srcs/sources_1/imports/190302_digi_cmd_interim_01/tb_CmdProcessor_Interim.vhd
+Error: txData is 10000011; while byte(5) character(1
