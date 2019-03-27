@@ -48,6 +48,10 @@ architecture cmdProc_behav of cmdProc is
     	putty_eq_1_wait, putty_eq_1_txnow,
     	putty_nr_2_wait, putty_nr_2_txnow,
     	cmd_ANNN_seqDone, cmd_ANNN_runPush, TRANSMIT_Tx_byte, cmd_ANNN_outputty,
+    	INIT_idle, INIT_wait, INIT_txnow, INIT_check,
+		valid_A_idle, valid_A_wait, valid_A_txnow, valid_A_check,
+		valid_1_idle, valid_1_wait, valid_1_txnow, valid_1_check,
+		valid_2_idle, valid_2_wait, valid_2_txnow, valid_2_check,
     	putty_ANNN_wait, putty_ANNN_txnow, 
     	putty_nr_3_wait, putty_nr_3_txnow,
     	putty_eq_2_wait, putty_eq_2_txnow,
@@ -94,7 +98,7 @@ begin
 	seq_state : PROCESS (clk, reset)
 	BEGIN
 		IF reset = '1' THEN
-			curState <= INIT;
+			curState <= INIT_idle;
 		ELSIF clk'EVENT AND clk = '1' THEN
 			curState <= nextState;
 		END IF;
@@ -113,54 +117,133 @@ begin
 		v_start := '0';
 		v_dataTx := byte;
 		CASE curState IS
-			WHEN INIT => --(sig_rxNow = '1') and 
-				IF (rxNow = '1') and ((rxData = "01000001") or (rxData = "01100001")) THEN
-					v_rxDone := '1';
-					nextState <= valid_A;
+			WHEN INIT_idle =>
+				IF (rxNow = '1') THEN
+					nextState <= INIT_wait;
 				ELSE
-					nextState <= INIT;
+					nextState <= INIT_idle;
 				END IF;
- 
-			WHEN valid_A => 
-				IF (rxData /= rxData_reg) and ((rxData = "00110000") OR (rxData = "00110001") OR (rxData = "00110010") OR (rxData = "00110011") OR (rxData = "00110100") OR (rxData = "00110101") OR (rxData = "00110110") OR (rxData = "00110111") OR (rxData = "00111000") OR (rxData = "00111001")) THEN
+			WHEN INIT_wait =>
+				IF (txdone = '1') then
+					nextState <= INIT_txnow;
+				ELSE
+					nextState <= INIT_wait;
+				END IF;
+			WHEN INIT_txnow =>
+				v_dataTx := rxData;
+				IF (txDone = '1') THEN
+					v_txNow := '1';
+					v_rxDone := '1';
+					nextState <= INIT_check;
+				ELSE
+					nextState <= INIT_txnow;
+				END IF;
+			WHEN INIT_check =>
+				IF (rxData = "01000001") or (rxData = "01100001") THEN
+					nextState <= valid_A_idle;
+				ELSE
+					nextState <= INIT_idle;
+				END IF;
+				
+			---------------------------------------
+			WHEN valid_A_idle =>
+				IF (rxNow = '1') THEN
+					nextState <= valid_A_wait;
+				ELSE
+					nextState <= valid_A_idle;
+				END IF;
+			WHEN valid_A_wait =>
+				IF (txdone = '1') then
+					nextState <= valid_A_txnow;
+				ELSE
+					nextState <= valid_A_wait;
+				END IF;
+			WHEN valid_A_txnow =>
+				v_dataTx := rxData;
+				IF (txDone = '1') THEN
+					v_txNow := '1';
+					v_rxDone := '1';
+					nextState <= valid_A_check;
+				ELSE
+					nextState <= valid_A_txnow;
+				END IF;
+			WHEN valid_A_check =>
+				IF (rxData = "00110000") OR (rxData = "00110001") OR (rxData = "00110010") OR (rxData = "00110011") OR (rxData = "00110100") OR (rxData = "00110101") OR (rxData = "00110110") OR (rxData = "00110111") OR (rxData = "00111000") OR (rxData = "00111001") THEN
 					numWords_bcd(2) <= rxData(3 downto 0);
-					v_rxDone := '1';
-					nextState <= valid_1;
+					--v_rxDone := '1';
+					nextState <= valid_1_idle;
 				ELSIF (rxData = "01000001") or (rxData = "01100001") THEN
-					v_rxDone := '1';
-					nextState <= valid_A;
+					--v_rxDone := '1';
+					nextState <= valid_A_idle;
 				ELSE
-					nextState <= INIT;
+					nextState <= INIT_idle;
 				END IF;
-
-			WHEN valid_1 =>
-				IF (rxData = rxData_reg) THEN
-					nextState <= valid_1;
-				ELSIF (rxData /= rxData_reg) and ((rxData = "00110000") OR (rxData = "00110001") OR (rxData = "00110010") OR (rxData = "00110011") OR (rxData = "00110100") OR (rxData = "00110101") OR (rxData = "00110110") OR (rxData = "00110111") OR (rxData = "00111000") OR (rxData = "00111001")) THEN
+			---------------------------------
+			WHEN valid_1_idle =>
+				IF (rxNow = '1') THEN
+					nextState <= valid_1_wait;
+				ELSE
+					nextState <= valid_1_idle;
+				END IF;
+			WHEN valid_1_wait =>
+				IF (txdone = '1') then
+					nextState <= valid_1_txnow;
+				ELSE
+					nextState <= valid_1_wait;
+				END IF;
+			WHEN valid_1_txnow =>
+				v_dataTx := rxData;
+				IF (txDone = '1') THEN
+					v_txNow := '1';
+					v_rxDone := '1';
+					nextState <= valid_1_check;
+				ELSE
+					nextState <= valid_1_txnow;
+				END IF;
+			WHEN valid_1_check =>
+				IF (rxData = "00110000") OR (rxData = "00110001") OR (rxData = "00110010") OR (rxData = "00110011") OR (rxData = "00110100") OR (rxData = "00110101") OR (rxData = "00110110") OR (rxData = "00110111") OR (rxData = "00111000") OR (rxData = "00111001") THEN
 					numWords_bcd(1) <= rxData(3 downto 0);
-					v_rxDone := '1';
-					nextState <= valid_2;
+					--v_rxDone := '1';
+					nextState <= valid_2_idle;
 				ELSIF (rxData = "01000001") or (rxData = "01100001") THEN
-					v_rxDone := '1';
-					nextState <= valid_A;
+					--v_rxDone := '1';
+					nextState <= valid_A_idle;
 				ELSE
-					nextState <= INIT;
+					nextState <= INIT_idle;
 				END IF;
-
-			WHEN valid_2 =>
-				IF (rxData = rxData_reg) THEN
-					nextState <= valid_2;
-				ELSIF (rxData /= rxData_reg) and ((rxData = "00110000") OR (rxData = "00110001") OR (rxData = "00110010") OR (rxData = "00110011") OR (rxData = "00110100") OR (rxData = "00110101") OR (rxData = "00110110") OR (rxData = "00110111") OR (rxData = "00111000") OR (rxData = "00111001")) THEN
-					numWords_bcd(0) <= rxData(3 downto 0);
-					v_rxDone := '1';
-					--processed <= '0';
-					nextState <= putty_nr_1_wait;--cmd_ANNN_txNow;
-				ELSIF (rxData = "01000001") or (rxData = "01100001") THEN
-					v_rxDone := '1';
-					nextState <= valid_A;
-				ELSE
-					nextState <= INIT;
-				END IF;
+				---------------------------------
+				WHEN valid_2_idle =>
+					IF (rxNow = '1') THEN
+						nextState <= valid_2_wait;
+					ELSE
+						nextState <= valid_2_idle;
+					END IF;
+				WHEN valid_2_wait =>
+					IF (txdone = '1') then
+						nextState <= valid_2_txnow;
+					ELSE
+						nextState <= valid_2_wait;
+					END IF;
+				WHEN valid_2_txnow =>
+					v_dataTx := rxData;
+					IF (txDone = '1') THEN
+						v_txNow := '1';
+						v_rxDone := '1';
+						nextState <= valid_2_check;
+					ELSE
+						nextState <= valid_2_txnow;
+					END IF;
+				WHEN valid_2_check =>
+					IF (rxData = "00110000") OR (rxData = "00110001") OR (rxData = "00110010") OR (rxData = "00110011") OR (rxData = "00110100") OR (rxData = "00110101") OR (rxData = "00110110") OR (rxData = "00110111") OR (rxData = "00111000") OR (rxData = "00111001") THEN
+						numWords_bcd(1) <= rxData(3 downto 0);
+						--v_rxDone := '1';
+						nextState <= putty_nr_1_wait;
+					ELSIF (rxData = "01000001") or (rxData = "01100001") THEN
+						--v_rxDone := '1';
+						nextState <= valid_A_idle;
+					ELSE
+						nextState <= INIT_idle;
+					END IF;
 			---------------------------------------
 			-- Newline after command accepted
 			WHEN putty_nr_1_wait =>
@@ -235,62 +318,168 @@ begin
 			WHEN cmd_ANNN_wait =>
 				IF (txdone = '1') then
 					v_start := '1';
-					nextState <= cmd_ANNN_data;
+					nextState <= cmd_ANNN_txNow_1; --cmd_ANNN_data;
 				else
 					nextState <= cmd_ANNN_wait;
 				END IF;
 				
-			WHEN cmd_ANNN_data =>
+			WHEN cmd_ANNN_txNow_1 => --cmd_ANNN_data =>
 				IF (dataReady = '1') THEN
-					nextState <= cmd_ANNN_convert;--cmd_ANNN_txNow;
+					CASE byte(7 downto 4) is
+						WHEN "0000" => v_dataTx := "00110000";
+						WHEN "0001" => v_dataTx := "00110001";
+						WHEN "0010" => v_dataTx := "00110010";
+						WHEN "0011" => v_dataTx := "00110011";
+						WHEN "0100" => v_dataTx := "00110100";
+						WHEN "0101" => v_dataTx := "00110101";
+						WHEN "0110" => v_dataTx := "00110110";
+						WHEN "0111" => v_dataTx := "00110111";
+						WHEN "1000" => v_dataTx := "00111000";
+						WHEN "1001" => v_dataTx := "00111001";
+							------------------------------
+						WHEN "1010" => v_dataTx := "01100001";
+						WHEN "1011" => v_dataTx := "01100010";
+						WHEN "1100" => v_dataTx := "01100011";
+						WHEN "1101" => v_dataTx := "01100100";
+						WHEN "1110" => v_dataTx := "01100101";
+						WHEN "1111" => v_dataTx := "01100110";
+						WHEN others => v_dataTx := "00000000";
+					END CASE;
+					v_txNow := '1';
+					nextState <= cmd_ANNN_txNow_2;--cmd_ANNN_runPush_1;--cmd_ANNN_txNow_1;--cmd_ANNN_txNow;
 				ELSE
-					nextState <= cmd_ANNN_data;
-				END IF;				
+					nextState <= cmd_ANNN_txNow_1;--cmd_ANNN_data;
+				END IF;
 			
-			WHEN cmd_ANNN_convert =>
-				IF (unsigned(byte(7 downto 4)) <= 57) and (unsigned(byte(7 downto 4)) >= 48) then
-					ANNN_dataTx(15 downto 8) <= (std_logic_vector(unsigned(byte(7 downto 4)) + 48));
-				else
-					ANNN_dataTx(15 downto 8) <= (std_logic_vector(unsigned(byte(7 downto 4)) + 87));
-				end if;
-				IF (unsigned(byte(3 downto 0)) <= 57) and (unsigned(byte(3 downto 0)) >= 48) then
-					ANNN_dataTx(7 downto 0) <= (std_logic_vector(unsigned(byte(3 downto 0)) + 48));
-				else
-					ANNN_dataTx(7 downto 0) <= (std_logic_vector(unsigned(byte(3 downto 0)) + 87));
-				end if;
-				nextState <= cmd_ANNN_txNow_1;
+--			WHEN cmd_ANNN_convert =>
+--				CASE byte(7 downto 4) is
+--					WHEN "0000" =>
+--						v_dataTx := "00110000";
+--					WHEN "0001" =>
+--						v_dataTx := "00110001";
+--					WHEN "0010" =>
+--						v_dataTx := "00110010";
+--					WHEN "0011" =>
+--						v_dataTx := "00110011";
+--					WHEN "0100" =>
+--						v_dataTx := "00110100";
+--					WHEN "0101" =>
+--						v_dataTx := "00110101";
+--					WHEN "0110" =>
+--						v_dataTx := "00110110";
+--					WHEN "0111" =>
+--						v_dataTx := "00110111";
+--					WHEN "1000" =>
+--						v_dataTx := "00111000";
+--					WHEN "1001" =>
+--						v_dataTx := "00111001";
+--						------------------------------
+--					WHEN "1010" =>
+--						v_dataTx := "01100001";
+--					WHEN "1011" =>
+--						v_dataTx := "01100010";
+--					WHEN "1100" =>
+--						v_dataTx := "01100011";
+--					WHEN "1101" =>
+--						v_dataTx := "01100100";
+--					WHEN "1110" =>
+--						v_dataTx := "01100101";
+--					WHEN "1111" =>
+--						v_dataTx := "01100110";
+--					WHEN others => v_dataTx := "00000000";
+--				END CASE;
 				
-			WHEN cmd_ANNN_txNow_1 =>
-				IF (txdone = '1') THEN
+--				nextState <= cmd_ANNN_txNow_1;
+				
+--			WHEN cmd_ANNN_txNow_1 =>
+--				IF (txdone = '1') THEN
+--					v_txNow := '1';
+--					nextState <= cmd_ANNN_runPush_1;
+--				ELSE
+--					nextState <= cmd_ANNN_txNow_1;
+--				END IF;
+					
+--			WHEN cmd_ANNN_runPush_1 =>
+----				CASE byte(7 downto 4) is
+----					WHEN "0000" => v_dataTx := "00110000";
+----					WHEN "0001" => v_dataTx := "00110001";
+----					WHEN "0010" => v_dataTx := "00110010";
+----					WHEN "0011" => v_dataTx := "00110011";
+----					WHEN "0100" => v_dataTx := "00110100";
+----					WHEN "0101" => v_dataTx := "00110101";
+----					WHEN "0110" => v_dataTx := "00110110";
+----					WHEN "0111" => v_dataTx := "00110111";
+----					WHEN "1000" => v_dataTx := "00111000";
+----					WHEN "1001" => v_dataTx := "00111001";
+----						------------------------------
+----					WHEN "1010" => v_dataTx := "01100001";
+----					WHEN "1011" => v_dataTx := "01100010";
+----					WHEN "1100" => v_dataTx := "01100011";
+----					WHEN "1101" => v_dataTx := "01100100";
+----					WHEN "1110" => v_dataTx := "01100101";
+----					WHEN "1111" => v_dataTx := "01100110";
+----					WHEN others => v_dataTx := "00000000";
+----				END CASE;
+--				IF (txdone = '1') then
+--					nextState <= cmd_ANNN_txNow_2;
+--				ELSE
+--					nextState <= cmd_ANNN_runPush_1;
+--				END IF;
+				
+			WHEN cmd_ANNN_txNow_2 => --cmd_ANNN_data =>
+				IF (dataReady = '1') THEN
+					CASE byte(3 downto 0) is
+						WHEN "0000" => v_dataTx := "00110000";
+						WHEN "0001" => v_dataTx := "00110001";
+						WHEN "0010" => v_dataTx := "00110010";
+						WHEN "0011" => v_dataTx := "00110011";
+						WHEN "0100" => v_dataTx := "00110100";
+						WHEN "0101" => v_dataTx := "00110101";
+						WHEN "0110" => v_dataTx := "00110110";
+						WHEN "0111" => v_dataTx := "00110111";
+						WHEN "1000" => v_dataTx := "00111000";
+						WHEN "1001" => v_dataTx := "00111001";
+							------------------------------
+						WHEN "1010" => v_dataTx := "01100001";
+						WHEN "1011" => v_dataTx := "01100010";
+						WHEN "1100" => v_dataTx := "01100011";
+						WHEN "1101" => v_dataTx := "01100100";
+						WHEN "1110" => v_dataTx := "01100101";
+						WHEN "1111" => v_dataTx := "01100110";
+						WHEN others => v_dataTx := "00000000";
+					END CASE;
 					v_txNow := '1';
-					nextState <= cmd_ANNN_runPush_1;
+					nextState <= putty_ANNN_wait;--cmd_ANNN_runPush_2;--cmd_ANNN_txNow_1;--cmd_ANNN_txNow;
 				ELSE
-					nextState <= cmd_ANNN_txNow_1;
+					nextState <= cmd_ANNN_txNow_2;--cmd_ANNN_data;
 				END IF;
 					
-			WHEN cmd_ANNN_runPush_1 =>
-				v_dataTx := ANNN_dataTx(15 downto 8);
-				IF (txdone = '1') then
-					nextState <= cmd_ANNN_txNow_2;
-				ELSE
-					nextState <= cmd_ANNN_runPush_1;
-				END IF;
-				
-			WHEN cmd_ANNN_txNow_2 =>
-				IF (txdone = '1') THEN
-					v_txNow := '1';
-					nextState <= cmd_ANNN_runPush_2;
-				ELSE
-					nextState <= cmd_ANNN_txNow_2;
-				END IF;
-					
-			WHEN cmd_ANNN_runPush_2 =>
-				v_dataTx := ANNN_dataTx(7 downto 0);
-				IF (txdone = '1') then
-					nextState <= cmd_ANNN_wait;
-				ELSE
-					nextState <= cmd_ANNN_runPush_2;
-				END IF;
+--			WHEN cmd_ANNN_runPush_2 =>
+--				CASE byte(3 downto 0) is
+--					WHEN "0000" => v_dataTx := "00110000";
+--					WHEN "0001" => v_dataTx := "00110001";
+--					WHEN "0010" => v_dataTx := "00110010";
+--					WHEN "0011" => v_dataTx := "00110011";
+--					WHEN "0100" => v_dataTx := "00110100";
+--					WHEN "0101" => v_dataTx := "00110101";
+--					WHEN "0110" => v_dataTx := "00110110";
+--					WHEN "0111" => v_dataTx := "00110111";
+--					WHEN "1000" => v_dataTx := "00111000";
+--					WHEN "1001" => v_dataTx := "00111001";
+--						------------------------------
+--					WHEN "1010" => v_dataTx := "01100001";
+--					WHEN "1011" => v_dataTx := "01100010";
+--					WHEN "1100" => v_dataTx := "01100011";
+--					WHEN "1101" => v_dataTx := "01100100";
+--					WHEN "1110" => v_dataTx := "01100101";
+--					WHEN "1111" => v_dataTx := "01100110";
+--					WHEN others => v_dataTx := "00000000";
+--				END CASE;
+--				IF (txdone = '1') then
+--					nextState <= cmd_ANNN_wait;
+--				ELSE
+--					nextState <= cmd_ANNN_runPush_2;
+--				END IF;
 				
 			---------------------------------------
 			WHEN putty_ANNN_wait =>
@@ -393,8 +582,12 @@ begin
 		rxDone <= v_rxDone;
 		txNow <= v_txNow;
 		--IF (dataReady = '1') or (curState = putty_n_txnow) or (curState = putty_n_txnow) then
+		IF
+			(curState /= cmd_ANNN_txnow_1) and
+			(dataReady = '1')
+		THEN
 			txdata <= v_dataTx;
-		--END IF;
+		END IF;
 	END PROCESS; -- combi_nextState
 	-----------------------------------------------------
 	
