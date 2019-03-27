@@ -11,7 +11,7 @@
 library ieee;
 use ieee.std_logic_1164.all;
 use work.common_pack.all;
---use IEEE.numeric_std.ALL;
+use IEEE.numeric_std.ALL;
 
 -- 190304: Defined entity
 entity cmdProc is
@@ -52,7 +52,10 @@ architecture cmdProc_behav of cmdProc is
     	putty_nr_3_wait, putty_nr_3_txnow,
     	putty_eq_2_wait, putty_eq_2_txnow,
     	putty_nr_4_wait, putty_nr_4_txnow,
-    	cmd_ANNN_wait, cmd_ANNN_data, cmd_ANNN_txNow); -- List your states here 
+    	cmd_ANNN_wait, cmd_ANNN_data, cmd_ANNN_txNow,
+    	cmd_ANNN_convert,
+    	cmd_ANNN_txNow_1, cmd_ANNN_runPush_1,
+    	cmd_ANNN_txNow_2, cmd_ANNN_runPush_2); -- List your states here 
 	SIGNAL curState, nextState : state_type;
 	SIGNAL processed : std_logic; -- registered input signal
 	SIGNAL rxData_reg, data_gen: std_logic_vector(7 downto 0); -- Stores rxData into FF
@@ -63,8 +66,9 @@ architecture cmdProc_behav of cmdProc is
 --	SIGNAL num_bcd: BCD_ARRAY_TYPE(2 downto 0) := ("0000", "0000", "0000"); -- Stores the same value as numWords_bcd, but can be read
 	SIGNAL count_nr, count_eq: INTEGER := 0;
 	SIGNAL en_count_nr, en_count_eq: std_logic; -- ENABLE inputs for counter 
-	SIGNAL ANNN_dataResults: char_array_type(56 downto 0);
-	SIGNAL ANNN_indexMax: BCD_ARRAY_TYPE(2 downto 0);
+	--SIGNAL ANNN_dataResults: char_array_type(56 downto 0);
+	--SIGNAL ANNN_indexMax: BCD_ARRAY_TYPE(2 downto 0);
+	SIGNAL ANNN_dataTx: std_logic_vector(15 downto 0);
 begin
 	-- 190310: IDEA - instead of using processed FF, output invalid data instead?
 	-- 190311:	Sequence working! (sans L & P)
@@ -97,7 +101,7 @@ begin
 	END PROCESS; -- seq
 	-----------------------------------------------------
 	combi_nextState : PROCESS (curState, rxNow, rxData, rxData_reg, 
-			processed, processed, txDone, dataReady, byte, 
+			processed, processed, txDone, dataReady, byte, ANNN_dataTx,
 			count_nr, count_eq) --, count_byte, num_bcd, bcd_integer, bcd_2, bcd_1, bcd_0)
 		variable v_rxDone, v_txNow, v_start: std_logic; -- variable for rxDone
 		variable v_dataTx: std_logic_vector(7 downto 0);
@@ -238,25 +242,56 @@ begin
 				
 			WHEN cmd_ANNN_data =>
 				IF (dataReady = '1') THEN
-					nextState <= cmd_ANNN_txNow;
+					nextState <= cmd_ANNN_convert;--cmd_ANNN_txNow;
 				ELSE
 					nextState <= cmd_ANNN_data;
 				END IF;				
 			
-			WHEN cmd_ANNN_txNow =>
+			WHEN cmd_ANNN_convert =>
+				IF (unsigned(byte(7 downto 4)) <= 57) and (unsigned(byte(7 downto 4)) >= 48) then
+					ANNN_dataTx(15 downto 8) <= (std_logic_vector(unsigned(byte(7 downto 4)) + 48));
+				else
+					ANNN_dataTx(15 downto 8) <= (std_logic_vector(unsigned(byte(7 downto 4)) + 87));
+				end if;
+				IF (unsigned(byte(3 downto 0)) <= 57) and (unsigned(byte(3 downto 0)) >= 48) then
+					ANNN_dataTx(7 downto 0) <= (std_logic_vector(unsigned(byte(3 downto 0)) + 48));
+				else
+					ANNN_dataTx(7 downto 0) <= (std_logic_vector(unsigned(byte(3 downto 0)) + 87));
+				end if;
+				nextState <= cmd_ANNN_txNow_1;
+				
+			WHEN cmd_ANNN_txNow_1 =>
 				IF (txdone = '1') THEN
 					v_txNow := '1';
-					nextState <= cmd_ANNN_runPush;
+					nextState <= cmd_ANNN_runPush_1;
 				ELSE
-					nextState <= cmd_ANNN_txNow;
+					nextState <= cmd_ANNN_txNow_1;
 				END IF;
 					
-			WHEN cmd_ANNN_runPush =>
+			WHEN cmd_ANNN_runPush_1 =>
+				v_dataTx := ANNN_dataTx(15 downto 8);
+				IF (txdone = '1') then
+					nextState <= cmd_ANNN_txNow_2;
+				ELSE
+					nextState <= cmd_ANNN_runPush_1;
+				END IF;
+				
+			WHEN cmd_ANNN_txNow_2 =>
+				IF (txdone = '1') THEN
+					v_txNow := '1';
+					nextState <= cmd_ANNN_runPush_2;
+				ELSE
+					nextState <= cmd_ANNN_txNow_2;
+				END IF;
+					
+			WHEN cmd_ANNN_runPush_2 =>
+				v_dataTx := ANNN_dataTx(7 downto 0);
 				IF (txdone = '1') then
 					nextState <= cmd_ANNN_wait;
 				ELSE
-					nextState <= cmd_ANNN_runPush;
+					nextState <= cmd_ANNN_runPush_2;
 				END IF;
+				
 			---------------------------------------
 			WHEN putty_ANNN_wait =>
 				IF (txdone = '1') then
