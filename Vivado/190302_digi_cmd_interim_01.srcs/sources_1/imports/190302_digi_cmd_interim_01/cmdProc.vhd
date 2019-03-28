@@ -64,6 +64,8 @@ architecture cmdProc_behav of cmdProc is
 	SIGNAL count_nr, count_eq: INTEGER := 0;
 	SIGNAL en_count_nr, en_count_eq: std_logic; -- ENABLE inputs for counter
 	SIGNAL ANNN_dataTx: std_logic_vector(15 downto 0);
+	SIGNAL out_indexMax: BCD_ARRAY_TYPE(2 downto 0);
+	SIGNAL out_dataResults: CHAR_ARRAY_TYPE(0 to RESULT_BYTE_NUM-1);
 begin
 	PROCESS (clk, rxData)
 	BEGIN
@@ -77,8 +79,10 @@ begin
 	PROCESS (clk, curState, seqDone)--, dataResults, maxIndex)
 	BEGIN
 		IF clk'EVENT AND clk = '1' THEN
-			IF (seqDone = '1') or (curState = putty_nr_1_wait) THEN -- 0
+			IF (seqDone = '1') THEN -- 0
 				processed <= '1';
+			ELSIF (curState = putty_nr_1_wait) then
+				processed <= '0';
 			END IF;
 		END IF;
 	END PROCESS;
@@ -412,7 +416,13 @@ begin
 		txdata <= s_dataTx;
 	END PROCESS; -- combi_nextState
 	-----------------------------------------------------
-	--PROCESS(clk)
+	PROCESS(clk, curState, maxIndex, dataResults, seqDone)
+	begin
+		IF (seqDone = '1') then
+			out_indexMax <= maxIndex;
+			out_dataResults <= dataResults;
+		END IF;
+	END PROCESS;
 	
 	
 	
