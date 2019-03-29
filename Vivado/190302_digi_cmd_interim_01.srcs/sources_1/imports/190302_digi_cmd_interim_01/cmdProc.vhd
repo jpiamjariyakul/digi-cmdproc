@@ -98,7 +98,7 @@ begin
 	END PROCESS; -- seq
 	-----------------------------------------------------
 	combi_nextState : PROCESS (curState, rxNow, rxData, --rxData_reg, 
-			processed, txDone, dataReady, byte, ANNN_dataTx,
+			processed, txDone, dataReady, ANNN_dataTx, --byte,
 			count_nr, count_eq) --, count_byte, num_bcd, bcd_integer, bcd_2, bcd_1, bcd_0)
 		variable v_rxDone, v_txNow, v_start: std_logic; -- variable for rxDone
 		--variable v_dataTx: std_logic_vector(7 downto 0);
@@ -150,7 +150,7 @@ begin
 			-- Checks for a numeric input
 			WHEN valid_A_check =>
 				IF (rxData = "00110000") OR (rxData = "00110001") OR (rxData = "00110010") OR (rxData = "00110011") OR (rxData = "00110100") OR (rxData = "00110101") OR (rxData = "00110110") OR (rxData = "00110111") OR (rxData = "00111000") OR (rxData = "00111001") THEN
-					numWords_bcd(2) <= rxData(3 downto 0);
+					--numWords_bcd(2) <= rxData(3 downto 0);
 					--v_rxDone := '1';
 					nextState <= valid_1_idle;
 				ELSIF (rxData = "01000001") or (rxData = "01100001") THEN
@@ -175,7 +175,7 @@ begin
 				END IF;
 			WHEN valid_1_check =>
 				IF (rxData = "00110000") OR (rxData = "00110001") OR (rxData = "00110010") OR (rxData = "00110011") OR (rxData = "00110100") OR (rxData = "00110101") OR (rxData = "00110110") OR (rxData = "00110111") OR (rxData = "00111000") OR (rxData = "00111001") THEN
-					numWords_bcd(1) <= rxData(3 downto 0);
+					--numWords_bcd(1) <= rxData(3 downto 0);
 					nextState <= valid_2_idle;
 				ELSIF (rxData = "01000001") or (rxData = "01100001") THEN
 					nextState <= valid_A_idle;
@@ -198,7 +198,7 @@ begin
 				END IF;
 			WHEN valid_2_check =>
 				IF (rxData = "00110000") OR (rxData = "00110001") OR (rxData = "00110010") OR (rxData = "00110011") OR (rxData = "00110100") OR (rxData = "00110101") OR (rxData = "00110110") OR (rxData = "00110111") OR (rxData = "00111000") OR (rxData = "00111001") THEN
-					numWords_bcd(0) <= rxData(3 downto 0);
+					--numWords_bcd(0) <= rxData(3 downto 0);
 					nextState <= putty_nr_1_wait;
 				ELSIF (rxData = "01000001") or (rxData = "01100001") THEN
 					nextState <= valid_A_idle;
@@ -439,6 +439,23 @@ begin
 		END IF;
 	END PROCESS;
 	-----------------------------------------------------
+	numWords: PROCESS(curState, rxData)
+	begin
+		IF (curState = valid_A_check) then
+			IF (rxData = "00110000") OR (rxData = "00110001") OR (rxData = "00110010") OR (rxData = "00110011") OR (rxData = "00110100") OR (rxData = "00110101") OR (rxData = "00110110") OR (rxData = "00110111") OR (rxData = "00111000") OR (rxData = "00111001") THEN
+				numWords_bcd(2) <= rxData(3 downto 0);
+			END IF;
+		elsif (curState = valid_1_check) then
+			IF (rxData = "00110000") OR (rxData = "00110001") OR (rxData = "00110010") OR (rxData = "00110011") OR (rxData = "00110100") OR (rxData = "00110101") OR (rxData = "00110110") OR (rxData = "00110111") OR (rxData = "00111000") OR (rxData = "00111001") THEN
+				numWords_bcd(1) <= rxData(3 downto 0);
+			END IF;
+		elsif (curState = valid_2_check) then
+			IF (rxData = "00110000") OR (rxData = "00110001") OR (rxData = "00110010") OR (rxData = "00110011") OR (rxData = "00110100") OR (rxData = "00110101") OR (rxData = "00110110") OR (rxData = "00110111") OR (rxData = "00111000") OR (rxData = "00111001") THEN
+				numWords_bcd(0) <= rxData(3 downto 0);
+			END IF;
+		end if;
+	end process;
+	-----------------------------------------------------
 	-- Decoder from nibble hex literals to ascii character equivalents
 	ascii_decode: PROCESS(clk, byte)
 	BEGIN
@@ -487,7 +504,7 @@ begin
 		END IF;
 	END PROCESS;
 	------------------------------------------------------
-	dataTx_set: PROCESS(clk, reset, curState, ANNN_dataTx, s_dataTx, rxData, rxNow, txDone, count_nr)
+	dataTx_set: PROCESS(clk, reset, curState, ANNN_dataTx, rxData, rxNow, txDone, count_nr)
 	begin
 		IF clk'EVENT AND clk='1' THEN
 			IF (reset = '1') or (curState = INIT) THEN
