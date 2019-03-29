@@ -61,23 +61,23 @@ architecture cmdProc_behav of cmdProc is
     	cmd_ANNN_outputty); -- List your states here 
 	SIGNAL curState, nextState : state_type;
 	SIGNAL processed : std_logic := '0'; -- registered input signal
-	SIGNAL rxData_reg, s_dataTx: std_logic_vector(7 downto 0); -- Stores rxData into FF
+	SIGNAL s_dataTx: std_logic_vector(7 downto 0); -- Stores rxData into FF --rxData_reg, 
 	SIGNAL count_nr, count_eq: INTEGER := 0;
 	SIGNAL en_count_nr, en_count_eq: std_logic; -- ENABLE inputs for counter
 	SIGNAL ANNN_dataTx: std_logic_vector(15 downto 0);
 	SIGNAL out_indexMax: BCD_ARRAY_TYPE(2 downto 0);
 	SIGNAL out_dataResults: CHAR_ARRAY_TYPE(0 to RESULT_BYTE_NUM-1);
 begin
-	PROCESS (clk, rxData)
-	BEGIN
-		IF clk'EVENT AND clk = '1' THEN
-			rxData_reg <= rxData;
-		END IF;
-	END PROCESS;
+--	rxReg: PROCESS (clk, rxData)
+--	BEGIN
+--		IF clk'EVENT AND clk = '1' THEN
+--			rxData_reg <= rxData;
+--		END IF;
+--	END PROCESS;
 	
 	-- FF for storing whether data processed
 	-- Also stores dataResult and peak index
-	PROCESS (clk, curState, seqDone)--, dataResults, maxIndex)
+	ff_process: PROCESS (clk, curState, seqDone)--, dataResults, maxIndex)
 	BEGIN
 		IF clk'EVENT AND clk = '1' THEN
 			IF (seqDone = '1') THEN -- 0
@@ -97,9 +97,9 @@ begin
 		END IF;
 	END PROCESS; -- seq
 	-----------------------------------------------------
-	combi_nextState : PROCESS (curState, rxNow, rxData, rxData_reg, 
-			processed, processed, txDone, dataReady, byte, ANNN_dataTx,
-			count_nr, count_eq, ANNN_dataTx) --, count_byte, num_bcd, bcd_integer, bcd_2, bcd_1, bcd_0)
+	combi_nextState : PROCESS (curState, rxNow, rxData, --rxData_reg, 
+			processed, txDone, dataReady, byte, ANNN_dataTx,
+			count_nr, count_eq) --, count_byte, num_bcd, bcd_integer, bcd_2, bcd_1, bcd_0)
 		variable v_rxDone, v_txNow, v_start: std_logic; -- variable for rxDone
 		--variable v_dataTx: std_logic_vector(7 downto 0);
 	BEGIN
