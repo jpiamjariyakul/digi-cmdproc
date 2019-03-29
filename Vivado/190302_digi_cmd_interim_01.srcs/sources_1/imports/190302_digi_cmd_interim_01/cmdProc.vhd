@@ -42,7 +42,8 @@ end cmdProc;
 -- 190304: Added arch - TBC
 architecture cmdProc_behav of cmdProc is
 -- Component declaration of dataConsume
-    TYPE state_type IS (INIT_idle, INIT_check,
+    TYPE state_type IS (INIT,
+    	INIT_idle, INIT_check,
     	valid_A_idle, valid_A_check,
     	valid_1_idle, valid_1_check,
     	valid_2_idle, valid_2_check,
@@ -90,7 +91,7 @@ begin
 	seq_state : PROCESS (clk, reset)
 	BEGIN
 		IF reset = '1' THEN
-			curState <= INIT_idle;
+			curState <= INIT;--_idle;
 		ELSIF clk'EVENT AND clk = '1' THEN
 			curState <= nextState;
 		END IF;
@@ -108,9 +109,12 @@ begin
 		v_start := '0';
 		CASE curState IS
 			-- Echoes whatever is typed to putty terminal
+			WHEN INIT =>
+				nextState <= INIT_idle;
+				
 			WHEN INIT_idle =>
 				IF (rxNow = '1') THEN
-					s_dataTx <= rxData;
+					--s_dataTx <= rxData;
 					IF (txDone = '1') THEN
 						v_txNow := '1';
 						v_rxDone := '1';
@@ -132,10 +136,10 @@ begin
 			-- Echoes whatever is typed to putty terminal
 			WHEN valid_A_idle =>
 				IF (rxNow = '1') THEN
-					s_dataTx <= rxData;
+					--s_dataTx <= rxData;
 					IF (txDone = '1') THEN
-						v_txNow := '1';
 						v_rxDone := '1';
+						v_txNow := '1';
 						nextState <= valid_A_check;
 					ELSE
 						nextState <= valid_A_idle;
@@ -158,10 +162,10 @@ begin
 			---------------------------------
 			WHEN valid_1_idle =>
 				IF (rxNow = '1') THEN
-					s_dataTx <= rxData;
+					--s_dataTx <= rxData;
 					IF (txDone = '1') THEN
-						v_txNow := '1';
 						v_rxDone := '1';
+						v_txNow := '1';
 						nextState <= valid_1_check;
 					ELSE
 						nextState <= valid_1_idle;
@@ -181,10 +185,10 @@ begin
 			---------------------------------
 			WHEN valid_2_idle =>
 				IF (rxNow = '1') THEN
-					s_dataTx <= rxData;
+					--s_dataTx <= rxData;
 					IF (txDone = '1') THEN
-						v_txNow := '1';
 						v_rxDone := '1';
+						v_txNow := '1';
 						nextState <= valid_2_check;
 					ELSE
 						nextState <= valid_2_idle;
@@ -212,10 +216,10 @@ begin
 				END IF;
 			-- Sets output corresponding to counter & passes it to Tx
 			WHEN putty_nr_1_tx =>
-				s_dataTx <= "00001010";
-				IF (count_nr > 1) THEN
-					s_dataTx <= "00001101";
-				END IF;
+--				s_dataTx <= "00001010";
+--				IF (count_nr > 1) THEN
+--					s_dataTx <= "00001101";
+--				END IF;
 				IF (txdone = '1') then
 					v_txNow := '1';
 					IF (count_nr > 1) then
@@ -237,7 +241,7 @@ begin
 				END IF;
 			-- Outputs '=' 5 times
 			WHEN putty_eq_1_tx =>
-				s_dataTx <= "00111101";				
+				--s_dataTx <= "00111101";
 				IF (txdone = '1') then
 					v_txNow := '1';
 					IF (count_eq > 4) then
@@ -257,10 +261,10 @@ begin
 					nextState <= putty_nr_2_wait;
 				END IF;
 			WHEN putty_nr_2_tx =>
-				s_dataTx <= "00001010";
-				IF (count_nr > 1) THEN
-					s_dataTx <= "00001101";
-				END IF;
+--				s_dataTx <= "00001010";
+--				IF (count_nr > 1) THEN
+--					s_dataTx <= "00001101";
+--				END IF;
 				IF (txdone = '1') then
 					v_txNow := '1';
 					IF (count_nr > 1) then
@@ -291,7 +295,7 @@ begin
 			-- Waits for txDone to be high, then setting output
 			WHEN cmd_ANNN_buffer_1 =>
 				if (txDone = '1') then
-					s_dataTx <= ANNN_dataTx(15 downto 8);
+					--s_dataTx <= ANNN_dataTx(15 downto 8);
 					v_txNow := '1';
 					nextState <= cmd_ANNN_tx_1; --cmd_ANNN_runPush_1;
 				ELSE
@@ -308,7 +312,7 @@ begin
 			-- Waits for txDone to be high, then setting output
 			WHEN cmd_ANNN_buffer_2 =>
 				if (txDone = '1') then
-					s_dataTx <= ANNN_dataTx(7 downto 0);
+					--s_dataTx <= ANNN_dataTx(7 downto 0);
 					v_txNow := '1';
 					nextState <= cmd_ANNN_tx_2; --cmd_ANNN_runPush_1;
 				ELSE
@@ -329,7 +333,7 @@ begin
 --					nextState <= putty_ANNN_wait;
 --				END IF;
 			WHEN putty_ANNN_space =>
-				s_dataTx <= "00100000";
+--				s_dataTx <= "00100000";
 				IF (txdone = '1') then
 					v_txNow := '1';
 					nextState <= cmd_ANNN_checkSeq;
@@ -352,11 +356,11 @@ begin
 					nextState <= putty_nr_3_wait;
 				END IF;
 			WHEN putty_nr_3_tx =>
-				s_dataTx <= "00001010";
-				IF (count_nr > 1) THEN
-				--ELSE
-					s_dataTx <= "00001101";
-				END IF;
+--				s_dataTx <= "00001010";
+--				IF (count_nr > 1) THEN
+--				--ELSE
+--					s_dataTx <= "00001101";
+--				END IF;
 				IF (txdone = '1') then
 					v_txNow := '1';
 					IF (count_nr > 1) then
@@ -376,7 +380,7 @@ begin
 					nextState <= putty_eq_2_wait;
 				END IF;
 			WHEN putty_eq_2_tx =>
-				s_dataTx <= "00111101";				
+--				s_dataTx <= "00111101";				
 				IF (txdone = '1') then
 					v_txNow := '1';
 					IF (count_eq > 4) then
@@ -396,10 +400,10 @@ begin
 					nextState <= putty_nr_4_wait;
 				END IF;
 			WHEN putty_nr_4_tx =>
-				s_dataTx <= "00001010";
-				IF (count_nr > 1) THEN
-					s_dataTx <= "00001101";
-				END IF;
+--				s_dataTx <= "00001010";
+--				IF (count_nr > 1) THEN
+--					s_dataTx <= "00001101";
+--				END IF;
 				IF (txdone = '1') then
 					v_txNow := '1';
 					IF (count_nr > 1) then
@@ -414,7 +418,7 @@ begin
 			-- Output of the program
 			WHEN cmd_ANNN_outputty =>
 				-- TODO: Add code
-				nextState <= INIT_idle;
+				nextState <= INIT;
 			---------------------------------
 			WHEN OTHERS => 
 				nextState <= INIT_idle;
@@ -480,6 +484,33 @@ begin
 				WHEN "1111" => ANNN_dataTx(7 downto 0) <= "01000110";
 				WHEN others => ANNN_dataTx(7 downto 0) <= "00000000";
 			END CASE;
+		END IF;
+	END PROCESS;
+	------------------------------------------------------
+	dataTx_set: PROCESS(clk, reset, curState, ANNN_dataTx, s_dataTx, rxData, rxNow, txDone, count_nr)
+	begin
+		IF clk'EVENT AND clk='1' THEN
+			IF (reset = '1') or (curState = INIT) THEN
+	        	s_dataTx <= X"FF"; -- assign a HEX value to std_logic_vector
+			elsif ((curState = INIT_idle) or (curState = valid_A_idle) or (curState = valid_1_idle) or (curState = valid_2_idle)) and (rxNow = '1') then
+				s_dataTx <= rxData;
+			elsif (curState = putty_nr_1_tx) or (curState = putty_nr_2_tx) or (curState = putty_nr_3_tx) or (curState = putty_nr_4_tx) then
+				IF (count_nr > 1) THEN
+					s_dataTx <= "00001101";
+				else
+					s_dataTx <= "00001010";
+				END IF;
+			elsif (curState = putty_eq_1_tx) or (curState = putty_eq_2_tx) then
+				s_dataTx <= "00111101";
+			elsif (curState = cmd_ANNN_buffer_1) and (txDone = '1') then
+				s_dataTx <= ANNN_dataTx(15 downto 8);
+			elsif (curState = cmd_ANNN_buffer_2) and (txDone = '1') then
+				s_dataTx <= ANNN_dataTx(7 downto 0);
+			elsif (curState = putty_ANNN_space) then
+				s_dataTx <= "00100000";
+--			else
+--				s_dataTx <= "11111111";
+			END IF;
 		END IF;
 	END PROCESS;
 	------------------------------------------------------
