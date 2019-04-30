@@ -50,11 +50,21 @@ architecture cmdProc_behav of cmdProc is
     	putty_nr_1_wait, putty_nr_1_tx,
     	putty_eq_1_wait, putty_eq_1_tx,
     	putty_nr_2_wait, putty_nr_2_tx,
-    	cmd_ANNN_wait, cmd_ANNN_dataReady, 
+    	cmd_wait,
+    	cmd_ANNN_dataReady, 
     	cmd_ANNN_buffer_1, cmd_ANNN_tx_1, 
     	cmd_ANNN_buffer_2, cmd_ANNN_tx_2,
     	--putty_ANNN_wait, putty_ANNN_tx,
-    	putty_ANNN_space, cmd_ANNN_checkSeq,
+    	cmd_L_buffer_1, cmd_L_tx_1, 
+    	cmd_L_buffer_2, cmd_L_tx_2,
+    	cmd_P_buffer_char_1, cmd_P_tx_char_1,
+    	cmd_P_buffer_char_2, cmd_P_tx_char_2,
+    	--putty_space_P,
+    	cmd_P_buffer_bcd_2, cmd_P_tx_bcd_2,
+    	cmd_P_buffer_bcd_1, cmd_P_tx_bcd_1,
+    	cmd_P_buffer_bcd_0, cmd_P_tx_bcd_0,
+    	putty_space, 
+    	cmd_ANNN_checkSeq, cmd_L_checkSeq, --cmd_P_checkSeq,
     	putty_nr_3_wait, putty_nr_3_tx,
     	putty_eq_2_wait, putty_eq_2_tx, 
     	putty_nr_4_wait, putty_nr_4_tx,
@@ -62,11 +72,13 @@ architecture cmdProc_behav of cmdProc is
 	SIGNAL curState, nextState : state_type;
 	SIGNAL processed : std_logic := '0'; -- registered input signal
 	SIGNAL s_dataTx: std_logic_vector(7 downto 0); -- Stores rxData into FF --rxData_reg, 
-	SIGNAL count_nr, count_eq: INTEGER := 0;
-	SIGNAL en_count_nr, en_count_eq: std_logic; -- ENABLE inputs for counter
-	SIGNAL ANNN_dataTx: std_logic_vector(15 downto 0);
+	SIGNAL count_nr, count_eq, count_L: INTEGER := 0;
+	SIGNAL en_count_nr, en_count_eq, en_count_L: std_logic; -- ENABLE inputs for counter
+	SIGNAL ANNN_dataTx, L_dataTx, P_dataTx: std_logic_vector(15 downto 0);
+	SIGNAL P_dataTx_p_2, P_dataTx_p_1, P_dataTx_p_0: std_logic_vector(7 downto 0);
 	SIGNAL out_indexMax: BCD_ARRAY_TYPE(2 downto 0);
 	SIGNAL out_dataResults: CHAR_ARRAY_TYPE(0 to RESULT_BYTE_NUM-1);
+	SIGNAL s_curChoice: std_logic_vector(7 downto 0); -- Stores choice (A, P, or L)
 begin
 --	rxReg: PROCESS (clk, rxData)
 --	BEGIN
@@ -125,10 +137,13 @@ begin
 				ELSE
 					nextState <= INIT_idle;
 				END IF;
-			-- Checks for inputs a/A
+			-- Checks for inputs a/A, or l/L or p/P
 			WHEN INIT_check =>
 				IF (rxData = "01000001") or (rxData = "01100001") THEN
-					nextState <= valid_A_idle;
+					nextState <= valid_A_idle; 
+				-- 'l' or "L"
+				ELSIF ((rxData = "01001100") or (rxData = "01101100") or (rxData = "01010000") or (rxData = "01110000")) and (processed = '1') THEN
+					nextState <= putty_nr_1_wait;
 				ELSE
 					nextState <= INIT_idle;
 				END IF;
@@ -268,7 +283,7 @@ begin
 				IF (txdone = '1') then
 					v_txNow := '1';
 					IF (count_nr > 1) then
-						nextState <= cmd_ANNN_wait;
+						nextState <= cmd_wait;
 					else
 						nextState <= putty_nr_2_wait;
 					end if;
@@ -277,13 +292,20 @@ begin
 				END IF;
 			---------------------------------------
 			---------------------------------------
-			WHEN cmd_ANNN_wait =>
+			WHEN cmd_wait =>
 				IF (txdone = '1') then
-					v_start := '1';
-					nextState <= cmd_ANNN_dataReady;
+					if s_CurChoice = "01000001" then
+						v_start := '1';
+						nextState <= cmd_ANNN_dataReady;
+					elsif s_CurChoice = "01001100" then
+						nextState <= cmd_L_buffer_1;
+					elsif s_CurChoice = "01010000" then
+						nextState <= cmd_P_buffer_char_1;
+					end if;
 				else
-					nextState <= cmd_ANNN_wait;
+					nextState <= cmd_wait;
 				END IF;
+			-------------------------
 				
 			WHEN cmd_ANNN_dataReady => --cmd_ANNN_data =>
 				IF (dataReady = '1') THEN
@@ -321,10 +343,163 @@ begin
 			-- Waits for txDone to be high again before proceeding
 			WHEN cmd_ANNN_tx_2 =>
 				if (txDone = '1') then
-					nextState <= putty_ANNN_space; --putty_ANNN_wait;
+					nextState <= putty_space; --putty_ANNN_wait;
 				ELSE
 					nextState <= cmd_ANNN_tx_2;
 				END IF;
+			---------------------------------------
+			---------------------------------------
+			
+			-- Outputs first nibble of byte as ascii
+			-- Waits for txDone to be high, then setting output
+			WHEN cmd_L_buffer_1 =>
+				if (txDone = '1') then
+					--s_dataTx <= ANNN_dataTx(15 downto 8);
+					v_txNow := '1';
+					nextState <= cmd_L_tx_1; --cmd_ANNN_runPush_1;
+				ELSE
+					nextState <= cmd_L_buffer_1;
+				END IF;
+			-- Waits for txDone to be high again before proceeding
+			WHEN cmd_L_tx_1 =>
+				if (txDone = '1') then
+					nextState <= cmd_L_buffer_2;
+				ELSE
+					nextState <= cmd_L_tx_1;
+				END IF;
+			-- Outputs second nibble as ascii
+			-- Waits for txDone to be high, then setting output
+			WHEN cmd_L_buffer_2 =>
+				if (txDone = '1') then
+					--s_dataTx <= ANNN_dataTx(7 downto 0);
+					v_txNow := '1';
+					nextState <= cmd_L_tx_2; --cmd_ANNN_runPush_1;
+				ELSE
+					nextState <= cmd_L_buffer_2;
+				END IF;
+			-- Waits for txDone to be high again before proceeding
+			WHEN cmd_L_tx_2 =>
+				if (txDone = '1') then
+					nextState <= putty_space; --putty_ANNN_wait;
+				ELSE
+					nextState <= cmd_L_tx_2;
+				END IF;
+			---------------------------------------
+			---------------------------------------
+			
+			-- Outputs first nibble of byte as ascii
+			-- Waits for txDone to be high, then setting output
+			WHEN cmd_P_buffer_char_1 =>
+				if (txDone = '1') then
+					--s_dataTx <= ANNN_dataTx(15 downto 8);
+					v_txNow := '1';
+					nextState <= cmd_P_tx_char_1; --cmd_ANNN_runPush_1;
+				ELSE
+					nextState <= cmd_P_buffer_char_1;
+				END IF;
+			-- Waits for txDone to be high again before proceeding
+			WHEN cmd_P_tx_char_1 =>
+				if (txDone = '1') then
+					nextState <= cmd_P_buffer_char_2;
+				ELSE
+					nextState <= cmd_P_tx_char_1;
+				END IF;
+			-- Outputs second nibble as ascii
+			-- Waits for txDone to be high, then setting output
+			WHEN cmd_P_buffer_char_2 =>
+				if (txDone = '1') then
+					--s_dataTx <= ANNN_dataTx(7 downto 0);
+					v_txNow := '1';
+					nextState <= cmd_P_tx_char_2; --cmd_ANNN_runPush_1;
+				ELSE
+					nextState <= cmd_P_buffer_char_2;
+				END IF;
+			-- Waits for txDone to be high again before proceeding
+			WHEN cmd_P_tx_char_2 =>
+				if (txDone = '1') then
+					nextState <= putty_space; --putty_ANNN_wait;
+				ELSE
+					nextState <= cmd_P_tx_char_2;
+				END IF;
+--			WHEN putty_space_P =>
+----				s_dataTx <= "00100000";
+--				IF (txdone = '1') then
+--					v_txNow := '1';
+--					nextState <= cmd_P_buffer_bcd_2;
+--				ELSE
+--					nextState <= putty_space_P;--putty_ANNN_tx;
+--				END IF;
+			WHEN cmd_P_buffer_bcd_2 =>
+				if (txDone = '1') then
+					--s_dataTx <= ANNN_dataTx(7 downto 0);
+					v_txNow := '1';
+					nextState <= cmd_P_tx_bcd_2; --cmd_ANNN_runPush_1;
+				ELSE
+					nextState <= cmd_P_buffer_bcd_2;
+				END IF;
+			-- Waits for txDone to be high again before proceeding
+			WHEN cmd_P_tx_bcd_2 =>
+				if (txDone = '1') then
+					nextState <= cmd_P_buffer_bcd_1; --putty_ANNN_wait;
+				ELSE
+					nextState <= cmd_P_tx_bcd_2;
+				END IF;
+				--------------
+			WHEN cmd_P_buffer_bcd_1 =>
+				if (txDone = '1') then
+					--s_dataTx <= ANNN_dataTx(7 downto 0);
+					v_txNow := '1';
+					nextState <= cmd_P_tx_bcd_1; --cmd_ANNN_runPush_1;
+				ELSE
+					nextState <= cmd_P_buffer_bcd_1;
+				END IF;
+			-- Waits for txDone to be high again before proceeding
+			WHEN cmd_P_tx_bcd_1 =>
+				if (txDone = '1') then
+					nextState <= cmd_P_buffer_bcd_0; --putty_ANNN_wait;
+				ELSE
+					nextState <= cmd_P_tx_bcd_1;
+				END IF;
+				--------------
+			WHEN cmd_P_buffer_bcd_0 =>
+				if (txDone = '1') then
+					--s_dataTx <= ANNN_dataTx(7 downto 0);
+					v_txNow := '1';
+					nextState <= cmd_P_tx_bcd_0; --cmd_ANNN_runPush_1;
+				ELSE
+					nextState <= cmd_P_buffer_bcd_0;
+				END IF;
+			-- Waits for txDone to be high again before proceeding
+			WHEN cmd_P_tx_bcd_0 =>
+				if (txDone = '1') then
+					nextState <= putty_nr_3_wait; --putty_ANNN_wait;
+				ELSE
+					nextState <= cmd_P_tx_bcd_0;
+				END IF;
+--			WHEN cmd_P_buffer_bcd =>
+--				if (txDone = '1') then
+--					--s_dataTx <= ANNN_dataTx(7 downto 0);
+--					v_txNow := '1';
+--					nextState <= cmd_P_tx_bcd; --cmd_ANNN_runPush_1;
+--				ELSE
+--					nextState <= cmd_P_buffer_bcd;
+--				END IF;
+--			-- Waits for txDone to be high again before proceeding
+--			WHEN cmd_P_tx_bcd =>
+--				if (txDone = '1') then
+--					nextState <= cmd_P_checkSeq; --putty_ANNN_wait;
+--				ELSE
+--					nextState <= cmd_P_tx_bcd;
+--				END IF;
+--			WHEN cmd_P_checkSeq =>
+--				IF (count_P >= 2) then
+--					nextState <= putty_nr_3_wait;
+--				else
+--					nextState <= cmd_P_buffer_bcd;
+--				end if;
+			
+			---------------------------------------
+			---------------------------------------
 			---------------------------------------
 --			WHEN putty_ANNN_wait =>
 --				IF (txdone = '1') then
@@ -332,19 +507,32 @@ begin
 --				ELSE
 --					nextState <= putty_ANNN_wait;
 --				END IF;
-			WHEN putty_ANNN_space =>
+			WHEN putty_space =>
 --				s_dataTx <= "00100000";
 				IF (txdone = '1') then
 					v_txNow := '1';
-					nextState <= cmd_ANNN_checkSeq;
+					if s_CurChoice = "01000001" then
+						nextState <= cmd_ANNN_checkSeq;
+					elsif s_CurChoice = "01001100" then
+						nextState <= cmd_L_checkSeq;
+					elsif s_CurChoice = "01010000" then
+						nextState <= cmd_P_buffer_bcd_2;
+					end if;
+					--nextState <= cmd_ANNN_checkSeq;
 				ELSE
-					nextState <= putty_ANNN_space;--putty_ANNN_tx;
+					nextState <= putty_space;--putty_ANNN_tx;
 				END IF;
 			WHEN cmd_ANNN_checkSeq =>
 				IF (processed = '1') then
 					nextState <= putty_nr_3_wait;
 				else
-					nextState <= cmd_ANNN_wait;
+					nextState <= cmd_wait;
+				end if;
+			WHEN cmd_L_checkSeq =>
+				IF (count_L >= 6) then
+					nextState <= putty_nr_3_wait;
+				else
+					nextState <= cmd_wait;
 				end if;
 			---------------------------------------
 			---------------------------------------
@@ -400,10 +588,6 @@ begin
 					nextState <= putty_nr_4_wait;
 				END IF;
 			WHEN putty_nr_4_tx =>
---				s_dataTx <= "00001010";
---				IF (count_nr > 1) THEN
---					s_dataTx <= "00001101";
---				END IF;
 				IF (txdone = '1') then
 					v_txNow := '1';
 					IF (count_nr > 1) then
@@ -414,12 +598,7 @@ begin
 				ELSE
 					nextState <= putty_nr_4_tx;
 				END IF;
-			---------------------------------------
-			-- Output of the program
---			WHEN cmd_ANNN_outputty =>
---				-- TODO: Add code
---				nextState <= INIT;
-			---------------------------------
+			-----------------
 			WHEN OTHERS => 
 				nextState <= INIT_idle;
 		END CASE;
@@ -431,9 +610,9 @@ begin
 	END PROCESS; -- combi_nextState
 	-----------------------------------------------------
 	-- Sets signals out_indexMax and out_dataResults when seqDone
-	lp_set: PROCESS(clk, curState, maxIndex, dataResults, seqDone)
+	lp_set: PROCESS(clk, curState, maxIndex, dataResults, seqDone, s_curChoice)
 	begin
-		IF (seqDone = '1') then
+		IF (s_curChoice = "01000001") and (seqDone = '1') then
 			out_indexMax <= maxIndex;
 			out_dataResults <= dataResults;
 		END IF;
@@ -458,6 +637,29 @@ begin
 		end if;
 	end process;
 	-----------------------------------------------------
+	
+	choice_store: PROCESS(clk, curState, rxData, reset)
+	begin
+		IF 	(curState = valid_2_check) AND (
+			(rxData = "00110000") OR (rxData = "00110001") OR 
+			(rxData = "00110010") OR (rxData = "00110011") OR 
+			(rxData = "00110100") OR (rxData = "00110101") OR 
+			(rxData = "00110110") OR (rxData = "00110111") OR 
+			(rxData = "00111000") OR (rxData = "00111001")) THEN
+			--numWords_bcd(0) <= rxData(3 downto 0);
+			s_curChoice <= "01000001";
+		ELSIF (curState = INIT_check) and (processed = '1') and (
+			(rxData = "01001100") or (rxData = "01101100")) THEN
+			s_curChoice <= "01001100";
+		ELSIF (curState = INIT_check) and (processed = '1') and (
+			(rxData = "01010000") or (rxData = "01110000")) THEN
+			s_curChoice <= "01010000";
+		ELSIF (reset = '1') THEN
+	        s_curChoice <= X"FF";
+		END IF;
+	end process;
+	-----------------------------------------------------	
+	
 	-- Decoder from nibble hex literals to ascii character equivalents
 	ascii_decode: PROCESS(clk, byte)
 	BEGIN
@@ -503,6 +705,146 @@ begin
 				WHEN "1111" => ANNN_dataTx(7 downto 0) <= "01000110";
 				WHEN others => ANNN_dataTx(7 downto 0) <= "00000000";
 			END CASE;
+			
+		END IF;
+	END PROCESS;
+	----------------------------
+	-- Decoder from nibble hex literals to ascii character equivalents
+	ascii_decode_L: PROCESS(clk, out_dataResults, count_L)
+	BEGIN
+		IF (clk'EVENT AND clk = '1') and (count_L < 7) THEN
+			CASE out_dataResults(count_L)(7 downto 4) is
+				WHEN "0000" => L_dataTx(15 downto 8) <= "00110000";
+				WHEN "0001" => L_dataTx(15 downto 8) <= "00110001";
+				WHEN "0010" => L_dataTx(15 downto 8) <= "00110010";
+				WHEN "0011" => L_dataTx(15 downto 8) <= "00110011";
+				WHEN "0100" => L_dataTx(15 downto 8) <= "00110100";
+				WHEN "0101" => L_dataTx(15 downto 8) <= "00110101";
+				WHEN "0110" => L_dataTx(15 downto 8) <= "00110110";
+				WHEN "0111" => L_dataTx(15 downto 8) <= "00110111";
+				WHEN "1000" => L_dataTx(15 downto 8) <= "00111000";
+				WHEN "1001" => L_dataTx(15 downto 8) <= "00111001";
+					------------------------------
+				WHEN "1010" => L_dataTx(15 downto 8) <= "01000001";
+				WHEN "1011" => L_dataTx(15 downto 8) <= "01000010";
+				WHEN "1100" => L_dataTx(15 downto 8) <= "01000011";
+				WHEN "1101" => L_dataTx(15 downto 8) <= "01000100";
+				WHEN "1110" => L_dataTx(15 downto 8) <= "01000101";
+				WHEN "1111" => L_dataTx(15 downto 8) <= "01000110";
+					------------------------------
+				WHEN others => L_dataTx(15 downto 8) <= "00000000";
+			END CASE;
+			CASE out_dataResults(count_L)(3 downto 0) is
+				WHEN "0000" => L_dataTx(7 downto 0) <= "00110000";
+				WHEN "0001" => L_dataTx(7 downto 0) <= "00110001";
+				WHEN "0010" => L_dataTx(7 downto 0) <= "00110010";
+				WHEN "0011" => L_dataTx(7 downto 0) <= "00110011";
+				WHEN "0100" => L_dataTx(7 downto 0) <= "00110100";
+				WHEN "0101" => L_dataTx(7 downto 0) <= "00110101";
+				WHEN "0110" => L_dataTx(7 downto 0) <= "00110110";
+				WHEN "0111" => L_dataTx(7 downto 0) <= "00110111";
+				WHEN "1000" => L_dataTx(7 downto 0) <= "00111000";
+				WHEN "1001" => L_dataTx(7 downto 0) <= "00111001";
+					------------------------------
+				WHEN "1010" => L_dataTx(7 downto 0) <= "01000001";
+				WHEN "1011" => L_dataTx(7 downto 0) <= "01000010";
+				WHEN "1100" => L_dataTx(7 downto 0) <= "01000011";
+				WHEN "1101" => L_dataTx(7 downto 0) <= "01000100";
+				WHEN "1110" => L_dataTx(7 downto 0) <= "01000101";
+				WHEN "1111" => L_dataTx(7 downto 0) <= "01000110";
+				WHEN others => L_dataTx(7 downto 0) <= "00000000";
+			END CASE;
+		END IF;
+	END PROCESS;
+	------------------------------------------------------
+	----------------------------
+	-- Decoder from nibble hex literals to ascii character equivalents
+	ascii_decode_P: PROCESS(clk, out_dataResults)
+	BEGIN
+		IF (clk'EVENT AND clk = '1') THEN
+			CASE out_dataResults(3)(7 downto 4) is
+				WHEN "0000" => P_dataTx(15 downto 8) <= "00110000";
+				WHEN "0001" => P_dataTx(15 downto 8) <= "00110001";
+				WHEN "0010" => P_dataTx(15 downto 8) <= "00110010";
+				WHEN "0011" => P_dataTx(15 downto 8) <= "00110011";
+				WHEN "0100" => P_dataTx(15 downto 8) <= "00110100";
+				WHEN "0101" => P_dataTx(15 downto 8) <= "00110101";
+				WHEN "0110" => P_dataTx(15 downto 8) <= "00110110";
+				WHEN "0111" => P_dataTx(15 downto 8) <= "00110111";
+				WHEN "1000" => P_dataTx(15 downto 8) <= "00111000";
+				WHEN "1001" => P_dataTx(15 downto 8) <= "00111001";
+					------------------------------
+				WHEN "1010" => P_dataTx(15 downto 8) <= "01000001";
+				WHEN "1011" => P_dataTx(15 downto 8) <= "01000010";
+				WHEN "1100" => P_dataTx(15 downto 8) <= "01000011";
+				WHEN "1101" => P_dataTx(15 downto 8) <= "01000100";
+				WHEN "1110" => P_dataTx(15 downto 8) <= "01000101";
+				WHEN "1111" => P_dataTx(15 downto 8) <= "01000110";
+					------------------------------
+				WHEN others => P_dataTx(15 downto 8) <= "00000000";
+			END CASE;
+			CASE out_dataResults(3)(3 downto 0) is
+				WHEN "0000" => P_dataTx(7 downto 0) <= "00110000";
+				WHEN "0001" => P_dataTx(7 downto 0) <= "00110001";
+				WHEN "0010" => P_dataTx(7 downto 0) <= "00110010";
+				WHEN "0011" => P_dataTx(7 downto 0) <= "00110011";
+				WHEN "0100" => P_dataTx(7 downto 0) <= "00110100";
+				WHEN "0101" => P_dataTx(7 downto 0) <= "00110101";
+				WHEN "0110" => P_dataTx(7 downto 0) <= "00110110";
+				WHEN "0111" => P_dataTx(7 downto 0) <= "00110111";
+				WHEN "1000" => P_dataTx(7 downto 0) <= "00111000";
+				WHEN "1001" => P_dataTx(7 downto 0) <= "00111001";
+					------------------------------
+				WHEN "1010" => P_dataTx(7 downto 0) <= "01000001";
+				WHEN "1011" => P_dataTx(7 downto 0) <= "01000010";
+				WHEN "1100" => P_dataTx(7 downto 0) <= "01000011";
+				WHEN "1101" => P_dataTx(7 downto 0) <= "01000100";
+				WHEN "1110" => P_dataTx(7 downto 0) <= "01000101";
+				WHEN "1111" => P_dataTx(7 downto 0) <= "01000110";
+				WHEN others => P_dataTx(7 downto 0) <= "00000000";
+			END CASE;
+			CASE out_indexMax(2) is
+				WHEN "0000" => P_dataTx_p_2(7 downto 0) <= "00110000";
+				WHEN "0001" => P_dataTx_p_2(7 downto 0) <= "00110001";
+				WHEN "0010" => P_dataTx_p_2(7 downto 0) <= "00110010";
+				WHEN "0011" => P_dataTx_p_2(7 downto 0) <= "00110011";
+				WHEN "0100" => P_dataTx_p_2(7 downto 0) <= "00110100";
+				WHEN "0101" => P_dataTx_p_2(7 downto 0) <= "00110101";
+				WHEN "0110" => P_dataTx_p_2(7 downto 0) <= "00110110";
+				WHEN "0111" => P_dataTx_p_2(7 downto 0) <= "00110111";
+				WHEN "1000" => P_dataTx_p_2(7 downto 0) <= "00111000";
+				WHEN "1001" => P_dataTx_p_2(7 downto 0) <= "00111001";
+					------------------------------
+				WHEN others => P_dataTx_p_2(7 downto 0) <= "00000000";
+			END CASE;
+			CASE out_indexMax(1) is
+				WHEN "0000" => P_dataTx_p_1(7 downto 0) <= "00110000";
+				WHEN "0001" => P_dataTx_p_1(7 downto 0) <= "00110001";
+				WHEN "0010" => P_dataTx_p_1(7 downto 0) <= "00110010";
+				WHEN "0011" => P_dataTx_p_1(7 downto 0) <= "00110011";
+				WHEN "0100" => P_dataTx_p_1(7 downto 0) <= "00110100";
+				WHEN "0101" => P_dataTx_p_1(7 downto 0) <= "00110101";
+				WHEN "0110" => P_dataTx_p_1(7 downto 0) <= "00110110";
+				WHEN "0111" => P_dataTx_p_1(7 downto 0) <= "00110111";
+				WHEN "1000" => P_dataTx_p_1(7 downto 0) <= "00111000";
+				WHEN "1001" => P_dataTx_p_1(7 downto 0) <= "00111001";
+					------------------------------
+				WHEN others => P_dataTx_p_1(7 downto 0) <= "00000000";
+			END CASE;
+			CASE out_indexMax(0) is
+				WHEN "0000" => P_dataTx_p_0(7 downto 0) <= "00110000";
+				WHEN "0001" => P_dataTx_p_0(7 downto 0) <= "00110001";
+				WHEN "0010" => P_dataTx_p_0(7 downto 0) <= "00110010";
+				WHEN "0011" => P_dataTx_p_0(7 downto 0) <= "00110011";
+				WHEN "0100" => P_dataTx_p_0(7 downto 0) <= "00110100";
+				WHEN "0101" => P_dataTx_p_0(7 downto 0) <= "00110101";
+				WHEN "0110" => P_dataTx_p_0(7 downto 0) <= "00110110";
+				WHEN "0111" => P_dataTx_p_0(7 downto 0) <= "00110111";
+				WHEN "1000" => P_dataTx_p_0(7 downto 0) <= "00111000";
+				WHEN "1001" => P_dataTx_p_0(7 downto 0) <= "00111001";
+					------------------------------
+				WHEN others => P_dataTx_p_0(7 downto 0) <= "00000000";
+			END CASE;
 		END IF;
 	END PROCESS;
 	------------------------------------------------------
@@ -525,8 +867,25 @@ begin
 				s_dataTx <= ANNN_dataTx(15 downto 8);
 			elsif (curState = cmd_ANNN_buffer_2) and (txDone = '1') then
 				s_dataTx <= ANNN_dataTx(7 downto 0);
-			elsif (curState = putty_ANNN_space) then
+			--------
+			elsif (curState = putty_space) then
 				s_dataTx <= "00100000";
+			--------
+			elsif (curState = cmd_L_buffer_1) then
+				s_dataTx <= L_dataTx(15 downto 8);
+			elsif (curState = cmd_L_buffer_2) then
+				s_dataTx <= L_dataTx(7 downto 0);
+			--------
+			elsif (curState = cmd_P_buffer_char_1) then
+				s_dataTx <= P_dataTx(15 downto 8);
+			elsif (curState = cmd_P_buffer_char_2) then
+				s_dataTx <= P_dataTx(7 downto 0);
+			elsif (curState = cmd_P_buffer_bcd_2) then
+				s_dataTx <= P_dataTx_p_2;
+			elsif (curState = cmd_P_buffer_bcd_1) then
+				s_dataTx <= P_dataTx_p_1;
+			elsif (curState = cmd_P_buffer_bcd_0) then
+				s_dataTx <= P_dataTx_p_0;
 --			else
 --				s_dataTx <= "11111111";
 			END IF;
@@ -539,6 +898,8 @@ begin
 		IF reset = '1' THEN -- active high reset
 			count_nr <= 0;
 			count_eq <= 0;
+			count_L <= 0;
+			--count_P <= 0;
 		ELSIF clk'EVENT AND clk = '1' THEN
 			-- Counter for line feed & carriage return
 			IF (curState = putty_nr_1_wait) or (curState = putty_nr_1_tx) or 
@@ -568,6 +929,35 @@ begin
 			else
 				count_eq <= 0;
 			END IF;
+			-- Counter for 'L' & seven bytes
+			IF 	(curState = cmd_wait) or 
+				(curState = cmd_L_buffer_1) or 
+				(curState = cmd_L_tx_1) or 
+				(curState = cmd_L_buffer_2) or 
+				(curState = cmd_L_tx_2) or
+				(curState = putty_space) or 
+				(curState = cmd_L_checkSeq) THEN
+				IF (curState = cmd_L_checkSeq) and (en_count_L = '1') then
+					count_L <= count_L + 1;
+				else
+					count_L <= count_L;
+				end if;
+			else
+				count_L <= 0;
+			END IF;
+--			-- Counter for three digits of BCD peak
+--			IF 	(curState = cmd_P_buffer_bcd) or 
+--				(curState = cmd_P_tx_bcd) or
+--				(curState = putty_space) or 
+--				(curState = cmd_P_checkSeq) THEN
+--				IF (curState = cmd_P_checkSeq) and (en_count_P = '1') then
+--					count_P <= count_P + 1;
+--				else
+--					count_P <= count_P;
+--				end if;
+--			else
+--				count_P <= 0;
+--			END IF;
 		END IF;
 	END PROCESS;
 	------------------------------------------------------
@@ -575,6 +965,8 @@ begin
 	BEGIN
 		en_count_nr <= '0';
 		en_count_eq <= '0';
+		en_count_L <= '0';
+--		en_count_P <= '0';
 		IF ((curState = putty_nr_1_wait) and (nextState /= putty_nr_1_wait)) or 
 			((curState = putty_nr_2_wait) and (nextState /= putty_nr_2_wait)) or
 			((curState = putty_nr_3_wait) and (nextState /= putty_nr_3_wait)) or
@@ -586,5 +978,11 @@ begin
 		IF ((curState = putty_eq_1_wait) and (nextState /= putty_eq_1_wait)) or ((curState = putty_eq_2_wait) and (nextState /= putty_eq_2_wait)) THEN
 			en_count_eq <= '1';
 		END IF;
+		IF (curState = cmd_L_checkSeq) and (nextState /= cmd_L_checkSeq) then
+			en_count_L <= '1';
+		end if;
+--		IF (curState = cmd_P_checkSeq) and (nextState /= cmd_P_checkSeq) then
+--			en_count_P <= '1';
+--		end if;
 	END PROCESS;
 end cmdProc_behav;
