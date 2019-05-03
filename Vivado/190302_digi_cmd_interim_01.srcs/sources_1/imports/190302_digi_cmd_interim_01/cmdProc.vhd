@@ -47,9 +47,11 @@ architecture cmdProc_behav of cmdProc is
     	valid_A_idle, valid_A_check,
     	valid_1_idle, valid_1_check,
     	valid_2_idle, valid_2_check,
-    	putty_nr_1_wait, putty_nr_1_tx,
+    	putty_n_1_wait, putty_n_1_tx,
+    	putty_r_1_wait, putty_r_1_tx,
     	putty_eq_1_wait, putty_eq_1_tx,
-    	putty_nr_2_wait, putty_nr_2_tx,
+    	putty_n_2_wait, putty_n_2_tx,
+    	putty_r_2_wait, putty_r_2_tx,
     	cmd_wait,
     	cmd_ANNN_dataReady, 
     	cmd_ANNN_buffer_1, cmd_ANNN_tx_1, 
@@ -65,15 +67,17 @@ architecture cmdProc_behav of cmdProc is
     	cmd_P_buffer_bcd_0, cmd_P_tx_bcd_0,
     	putty_space, 
     	cmd_ANNN_checkSeq, cmd_L_checkSeq, --cmd_P_checkSeq,
-    	putty_nr_3_wait, putty_nr_3_tx,
+    	putty_n_3_wait, putty_n_3_tx,
+    	putty_r_3_wait, putty_r_3_tx,
     	putty_eq_2_wait, putty_eq_2_tx, 
-    	putty_nr_4_wait, putty_nr_4_tx,
-    	cmd_ANNN_outputty); -- List your states here 
+    	putty_n_4_wait, putty_n_4_tx,
+    	putty_r_4_wait, putty_r_4_tx,
+    	putty_wait_final); -- List your states here 
 	SIGNAL curState, nextState : state_type;
 	SIGNAL processed : std_logic := '0'; -- registered input signal
 	SIGNAL s_dataTx: std_logic_vector(7 downto 0); -- Stores rxData into FF --rxData_reg, 
-	SIGNAL count_nr, count_eq, count_L: INTEGER := 0;
-	SIGNAL en_count_nr, en_count_eq, en_count_L: std_logic; -- ENABLE inputs for counter
+	SIGNAL count_eq, count_L: INTEGER := 0; --count_nr, 
+	SIGNAL en_count_eq, en_count_L: std_logic; -- ENABLE inputs for counter en_count_nr, 
 	SIGNAL ANNN_dataTx, L_dataTx, P_dataTx: std_logic_vector(15 downto 0);
 	SIGNAL P_dataTx_p_2, P_dataTx_p_1, P_dataTx_p_0: std_logic_vector(7 downto 0);
 	SIGNAL out_indexMax: BCD_ARRAY_TYPE(2 downto 0);
@@ -82,19 +86,19 @@ architecture cmdProc_behav of cmdProc is
 begin
 --	rxReg: PROCESS (clk, rxData)
 --	BEGIN
---		IF clk'EVENT AND clk = '1' THEN
+--		IF rising_edge(CLK) THEN
 --			rxData_reg <= rxData;
 --		END IF;
 --	END PROCESS;
 	
 	-- FF for storing whether data processed
 	-- Also stores dataResult and peak index
-	ff_process: PROCESS (clk, curState, seqDone)--, dataResults, maxIndex)
+	ff_process: PROCESS (clk, curState, seqDone, s_CurChoice)--, dataResults, maxIndex)
 	BEGIN
-		IF clk'EVENT AND clk = '1' THEN
+		IF rising_edge(CLK) THEN
 			IF (seqDone = '1') THEN -- 0
 				processed <= '1';
-			ELSIF (curState = putty_nr_1_wait) then
+			ELSIF (curState = putty_n_1_wait) and (s_CurChoice = "01000001") then
 				processed <= '0';
 			END IF;
 		END IF;
@@ -104,14 +108,14 @@ begin
 	BEGIN
 		IF reset = '1' THEN
 			curState <= INIT_idle;
-		ELSIF clk'EVENT AND clk = '1' THEN
+		ELSIF rising_edge(CLK) THEN
 			curState <= nextState;
 		END IF;
 	END PROCESS; -- seq
-	-----------------------------------------------------
+	-----------------------------------------------------count_nr
 	combi_nextState : PROCESS (curState, rxNow, rxData, --rxData_reg, 
 			processed, txDone, dataReady, ANNN_dataTx, --byte,
-			count_nr, count_eq, s_dataTx) --, count_byte, num_bcd, bcd_integer, bcd_2, bcd_1, bcd_0)
+			count_eq, s_dataTx) --, count_byte, num_bcd, bcd_integer, bcd_2, bcd_1, bcd_0)
 		variable v_rxDone, v_txNow, v_start: std_logic; -- variable for rxDone
 		--variable v_dataTx: std_logic_vector(7 downto 0);
 	BEGIN
@@ -125,45 +129,35 @@ begin
 --				nextState <= INIT_idle;
 				
 			WHEN INIT_idle =>
-				IF (rxNow = '1') THEN
-					--s_dataTx <= rxData;
-					IF (txDone = '1') THEN
-						v_txNow := '1';
-						v_rxDone := '1';
-						nextState <= INIT_check;
-					ELSE
-						nextState <= INIT_idle;
-					END IF;
+				IF (rxNow = '1') and (txDone = '1') THEN
+					v_rxDone := '1';
+					nextState <= INIT_check;
 				ELSE
 					nextState <= INIT_idle;
 				END IF;
 			-- Checks for inputs a/A, or l/L or p/P
 			WHEN INIT_check =>
+				v_txNow := '1';
 				IF (rxData = "01000001") or (rxData = "01100001") THEN
-					nextState <= valid_A_idle; 
+					nextState <= valid_A_idle;
 				-- 'l' or "L"
 				ELSIF ((rxData = "01001100") or (rxData = "01101100") or (rxData = "01010000") or (rxData = "01110000")) and (processed = '1') THEN
-					nextState <= putty_nr_1_wait;
+					nextState <= putty_n_1_wait;
 				ELSE
 					nextState <= INIT_idle;
 				END IF;
 			---------------------------------------
 			-- Echoes whatever is typed to putty terminal
 			WHEN valid_A_idle =>
-				IF (rxNow = '1') THEN
-					--s_dataTx <= rxData;
-					IF (txDone = '1') THEN
-						v_rxDone := '1';
-						v_txNow := '1';
-						nextState <= valid_A_check;
-					ELSE
-						nextState <= valid_A_idle;
-					END IF;
+				IF (rxNow = '1') and (txDone = '1') THEN
+					v_rxDone := '1';
+					nextState <= valid_A_check;
 				ELSE
 					nextState <= valid_A_idle;
 				END IF;
 			-- Checks for a numeric input
 			WHEN valid_A_check =>
+				v_txNow := '1';
 				IF (rxData = "00110000") OR (rxData = "00110001") OR (rxData = "00110010") OR (rxData = "00110011") OR (rxData = "00110100") OR (rxData = "00110101") OR (rxData = "00110110") OR (rxData = "00110111") OR (rxData = "00111000") OR (rxData = "00111001") THEN
 					--numWords_bcd(2) <= rxData(3 downto 0);
 					--v_rxDone := '1';
@@ -171,79 +165,81 @@ begin
 				ELSIF (rxData = "01000001") or (rxData = "01100001") THEN
 					--v_rxDone := '1';
 					nextState <= valid_A_idle;
+				ELSIF ((rxData = "01001100") or (rxData = "01101100") or (rxData = "01010000") or (rxData = "01110000")) and (processed = '1') THEN
+					nextState <= putty_n_1_wait;
 				ELSE
 					nextState <= INIT_idle;
 				END IF;
 			---------------------------------
 			WHEN valid_1_idle =>
-				IF (rxNow = '1') THEN
-					--s_dataTx <= rxData;
-					IF (txDone = '1') THEN
-						v_rxDone := '1';
-						v_txNow := '1';
-						nextState <= valid_1_check;
-					ELSE
-						nextState <= valid_1_idle;
-					END IF;
+				IF (rxNow = '1') and (txDone = '1') THEN
+					v_rxDone := '1';
+					nextState <= valid_1_check;
 				ELSE
 					nextState <= valid_1_idle;
 				END IF;
 			WHEN valid_1_check =>
+				v_txNow := '1';
 				IF (rxData = "00110000") OR (rxData = "00110001") OR (rxData = "00110010") OR (rxData = "00110011") OR (rxData = "00110100") OR (rxData = "00110101") OR (rxData = "00110110") OR (rxData = "00110111") OR (rxData = "00111000") OR (rxData = "00111001") THEN
 					--numWords_bcd(1) <= rxData(3 downto 0);
 					nextState <= valid_2_idle;
 				ELSIF (rxData = "01000001") or (rxData = "01100001") THEN
 					nextState <= valid_A_idle;
+				ELSIF ((rxData = "01001100") or (rxData = "01101100") or (rxData = "01010000") or (rxData = "01110000")) and (processed = '1') THEN
+					nextState <= putty_n_1_wait;
 				ELSE
 					nextState <= INIT_idle;
 				END IF;
 			---------------------------------
 			WHEN valid_2_idle =>
-				IF (rxNow = '1') THEN
-					--s_dataTx <= rxData;
-					IF (txDone = '1') THEN
-						v_rxDone := '1';
-						v_txNow := '1';
-						nextState <= valid_2_check;
-					ELSE
-						nextState <= valid_2_idle;
-					END IF;
+				IF (rxNow = '1') and (txDone = '1') THEN
+					v_rxDone := '1';
+					nextState <= valid_2_check;
 				ELSE
 					nextState <= valid_2_idle;
 				END IF;
 			WHEN valid_2_check =>
+				v_txNow := '1';
 				IF (rxData = "00110000") OR (rxData = "00110001") OR (rxData = "00110010") OR (rxData = "00110011") OR (rxData = "00110100") OR (rxData = "00110101") OR (rxData = "00110110") OR (rxData = "00110111") OR (rxData = "00111000") OR (rxData = "00111001") THEN
 					--numWords_bcd(0) <= rxData(3 downto 0);
-					nextState <= putty_nr_1_wait;
+					nextState <= putty_n_1_wait;
 				ELSIF (rxData = "01000001") or (rxData = "01100001") THEN
 					nextState <= valid_A_idle;
+				ELSIF ((rxData = "01001100") or (rxData = "01101100") or (rxData = "01010000") or (rxData = "01110000")) and (processed = '1') THEN
+					nextState <= putty_n_1_wait;
 				ELSE
 					nextState <= INIT_idle;
 				END IF;
 			---------------------------------------
 			-- Newline after command accepted
 			-- Waits until txdone is high
-			WHEN putty_nr_1_wait =>
+			WHEN putty_n_1_wait =>
 				IF (txdone = '1') then
-					nextState <= putty_nr_1_tx;
+					nextState <= putty_n_1_tx;
 				ELSE
-					nextState <= putty_nr_1_wait;
+					nextState <= putty_n_1_wait;
 				END IF;
 			-- Sets output corresponding to counter & passes it to Tx
-			WHEN putty_nr_1_tx =>
---				s_dataTx <= "00001010";
---				IF (count_nr > 1) THEN
---					s_dataTx <= "00001101";
---				END IF;
+			WHEN putty_n_1_tx =>
 				IF (txdone = '1') then
 					v_txNow := '1';
-					IF (count_nr > 1) then
-						nextState <= putty_eq_1_wait;
-					else
-						nextState <= putty_nr_1_wait;
-					end if;
+					nextState <= putty_r_1_wait;
 				ELSE
-					nextState <= putty_nr_1_tx;
+					nextState <= putty_n_1_tx;
+				END IF;
+			WHEN putty_r_1_wait =>
+				IF (txdone = '1') then
+					nextState <= putty_r_1_tx;
+				ELSE
+					nextState <= putty_r_1_wait;
+				END IF;
+			-- Sets output corresponding to counter & passes it to Tx
+			WHEN putty_r_1_tx =>
+				IF (txdone = '1') then
+					v_txNow := '1';
+					nextState <= putty_eq_1_wait;
+				ELSE
+					nextState <= putty_r_1_tx;
 				END IF;
 			---------------------------------------
 			-- Dividing line after command accepted
@@ -260,7 +256,7 @@ begin
 				IF (txdone = '1') then
 					v_txNow := '1';
 					IF (count_eq > 4) then
-						nextState <= putty_nr_2_wait;
+						nextState <= putty_n_2_wait;
 					else
 						nextState <= putty_eq_1_wait;
 					end if;
@@ -269,26 +265,33 @@ begin
 				END IF;
 			---------------------------------------
 			-- Newline before bitstream begins
-			WHEN putty_nr_2_wait =>
+			WHEN putty_n_2_wait =>
 				IF (txdone = '1') then
-					nextState <= putty_nr_2_tx;
+					nextState <= putty_n_2_tx;
 				ELSE
-					nextState <= putty_nr_2_wait;
+					nextState <= putty_n_2_wait;
 				END IF;
-			WHEN putty_nr_2_tx =>
---				s_dataTx <= "00001010";
---				IF (count_nr > 1) THEN
---					s_dataTx <= "00001101";
---				END IF;
+			-- Sets output corresponding to counter & passes it to Tx
+			WHEN putty_n_2_tx =>
 				IF (txdone = '1') then
 					v_txNow := '1';
-					IF (count_nr > 1) then
-						nextState <= cmd_wait;
-					else
-						nextState <= putty_nr_2_wait;
-					end if;
+					nextState <= putty_r_2_wait;
 				ELSE
-					nextState <= putty_nr_2_tx;
+					nextState <= putty_n_2_tx;
+				END IF;
+			WHEN putty_r_2_wait =>
+				IF (txdone = '1') then
+					nextState <= putty_r_2_tx;
+				ELSE
+					nextState <= putty_r_2_wait;
+				END IF;
+			-- Sets output corresponding to counter & passes it to Tx
+			WHEN putty_r_2_tx =>
+				IF (txdone = '1') then
+					v_txNow := '1';
+					nextState <= cmd_wait;
+				ELSE
+					nextState <= putty_r_2_tx;
 				END IF;
 			---------------------------------------
 			---------------------------------------
@@ -318,7 +321,6 @@ begin
 			WHEN cmd_ANNN_buffer_1 =>
 				if (txDone = '1') then
 					--s_dataTx <= ANNN_dataTx(15 downto 8);
-					v_txNow := '1';
 					nextState <= cmd_ANNN_tx_1; --cmd_ANNN_runPush_1;
 				ELSE
 					nextState <= cmd_ANNN_buffer_1;
@@ -326,6 +328,7 @@ begin
 			-- Waits for txDone to be high again before proceeding
 			WHEN cmd_ANNN_tx_1 =>
 				if (txDone = '1') then
+					v_txNow := '1';
 					nextState <= cmd_ANNN_buffer_2;
 				ELSE
 					nextState <= cmd_ANNN_tx_1;
@@ -335,7 +338,6 @@ begin
 			WHEN cmd_ANNN_buffer_2 =>
 				if (txDone = '1') then
 					--s_dataTx <= ANNN_dataTx(7 downto 0);
-					v_txNow := '1';
 					nextState <= cmd_ANNN_tx_2; --cmd_ANNN_runPush_1;
 				ELSE
 					nextState <= cmd_ANNN_buffer_2;
@@ -343,7 +345,12 @@ begin
 			-- Waits for txDone to be high again before proceeding
 			WHEN cmd_ANNN_tx_2 =>
 				if (txDone = '1') then
-					nextState <= putty_space; --putty_ANNN_wait;
+					v_txNow := '1';
+					IF (processed = '1') then
+						nextState <= putty_n_3_wait;
+					else
+						nextState <= putty_space; --putty_ANNN_wait;
+					end if;
 				ELSE
 					nextState <= cmd_ANNN_tx_2;
 				END IF;
@@ -355,7 +362,7 @@ begin
 			WHEN cmd_L_buffer_1 =>
 				if (txDone = '1') then
 					--s_dataTx <= ANNN_dataTx(15 downto 8);
-					v_txNow := '1';
+					--v_txNow := '1';
 					nextState <= cmd_L_tx_1; --cmd_ANNN_runPush_1;
 				ELSE
 					nextState <= cmd_L_buffer_1;
@@ -363,6 +370,7 @@ begin
 			-- Waits for txDone to be high again before proceeding
 			WHEN cmd_L_tx_1 =>
 				if (txDone = '1') then
+					v_txNow := '1';
 					nextState <= cmd_L_buffer_2;
 				ELSE
 					nextState <= cmd_L_tx_1;
@@ -372,7 +380,6 @@ begin
 			WHEN cmd_L_buffer_2 =>
 				if (txDone = '1') then
 					--s_dataTx <= ANNN_dataTx(7 downto 0);
-					v_txNow := '1';
 					nextState <= cmd_L_tx_2; --cmd_ANNN_runPush_1;
 				ELSE
 					nextState <= cmd_L_buffer_2;
@@ -380,6 +387,7 @@ begin
 			-- Waits for txDone to be high again before proceeding
 			WHEN cmd_L_tx_2 =>
 				if (txDone = '1') then
+					v_txNow := '1';
 					nextState <= putty_space; --putty_ANNN_wait;
 				ELSE
 					nextState <= cmd_L_tx_2;
@@ -392,7 +400,7 @@ begin
 			WHEN cmd_P_buffer_char_1 =>
 				if (txDone = '1') then
 					--s_dataTx <= ANNN_dataTx(15 downto 8);
-					v_txNow := '1';
+					--v_txNow := '1';
 					nextState <= cmd_P_tx_char_1; --cmd_ANNN_runPush_1;
 				ELSE
 					nextState <= cmd_P_buffer_char_1;
@@ -400,6 +408,7 @@ begin
 			-- Waits for txDone to be high again before proceeding
 			WHEN cmd_P_tx_char_1 =>
 				if (txDone = '1') then
+					v_txNow := '1';
 					nextState <= cmd_P_buffer_char_2;
 				ELSE
 					nextState <= cmd_P_tx_char_1;
@@ -409,7 +418,7 @@ begin
 			WHEN cmd_P_buffer_char_2 =>
 				if (txDone = '1') then
 					--s_dataTx <= ANNN_dataTx(7 downto 0);
-					v_txNow := '1';
+					--v_txNow := '1';
 					nextState <= cmd_P_tx_char_2; --cmd_ANNN_runPush_1;
 				ELSE
 					nextState <= cmd_P_buffer_char_2;
@@ -417,6 +426,7 @@ begin
 			-- Waits for txDone to be high again before proceeding
 			WHEN cmd_P_tx_char_2 =>
 				if (txDone = '1') then
+					v_txNow := '1';
 					nextState <= putty_space; --putty_ANNN_wait;
 				ELSE
 					nextState <= cmd_P_tx_char_2;
@@ -432,7 +442,7 @@ begin
 			WHEN cmd_P_buffer_bcd_2 =>
 				if (txDone = '1') then
 					--s_dataTx <= ANNN_dataTx(7 downto 0);
-					v_txNow := '1';
+					--v_txNow := '1';
 					nextState <= cmd_P_tx_bcd_2; --cmd_ANNN_runPush_1;
 				ELSE
 					nextState <= cmd_P_buffer_bcd_2;
@@ -440,6 +450,7 @@ begin
 			-- Waits for txDone to be high again before proceeding
 			WHEN cmd_P_tx_bcd_2 =>
 				if (txDone = '1') then
+					v_txNow := '1';
 					nextState <= cmd_P_buffer_bcd_1; --putty_ANNN_wait;
 				ELSE
 					nextState <= cmd_P_tx_bcd_2;
@@ -448,7 +459,7 @@ begin
 			WHEN cmd_P_buffer_bcd_1 =>
 				if (txDone = '1') then
 					--s_dataTx <= ANNN_dataTx(7 downto 0);
-					v_txNow := '1';
+					--v_txNow := '1';
 					nextState <= cmd_P_tx_bcd_1; --cmd_ANNN_runPush_1;
 				ELSE
 					nextState <= cmd_P_buffer_bcd_1;
@@ -456,6 +467,7 @@ begin
 			-- Waits for txDone to be high again before proceeding
 			WHEN cmd_P_tx_bcd_1 =>
 				if (txDone = '1') then
+					v_txNow := '1';
 					nextState <= cmd_P_buffer_bcd_0; --putty_ANNN_wait;
 				ELSE
 					nextState <= cmd_P_tx_bcd_1;
@@ -464,7 +476,7 @@ begin
 			WHEN cmd_P_buffer_bcd_0 =>
 				if (txDone = '1') then
 					--s_dataTx <= ANNN_dataTx(7 downto 0);
-					v_txNow := '1';
+					--v_txNow := '1';
 					nextState <= cmd_P_tx_bcd_0; --cmd_ANNN_runPush_1;
 				ELSE
 					nextState <= cmd_P_buffer_bcd_0;
@@ -472,7 +484,8 @@ begin
 			-- Waits for txDone to be high again before proceeding
 			WHEN cmd_P_tx_bcd_0 =>
 				if (txDone = '1') then
-					nextState <= putty_nr_3_wait; --putty_ANNN_wait;
+					v_txNow := '1';
+					nextState <= putty_n_3_wait;
 				ELSE
 					nextState <= cmd_P_tx_bcd_0;
 				END IF;
@@ -493,7 +506,7 @@ begin
 --				END IF;
 --			WHEN cmd_P_checkSeq =>
 --				IF (count_P >= 2) then
---					nextState <= putty_nr_3_wait;
+--					nextState <= putty_n_3_wait;
 --				else
 --					nextState <= cmd_P_buffer_bcd;
 --				end if;
@@ -512,7 +525,7 @@ begin
 				IF (txdone = '1') then
 					v_txNow := '1';
 					if s_CurChoice = "01000001" then
-						nextState <= cmd_ANNN_checkSeq;
+						nextState <= cmd_wait;--cmd_ANNN_checkSeq;
 					elsif s_CurChoice = "01001100" then
 						nextState <= cmd_L_checkSeq;
 					elsif s_CurChoice = "01010000" then
@@ -522,42 +535,48 @@ begin
 				ELSE
 					nextState <= putty_space;--putty_ANNN_tx;
 				END IF;
-			WHEN cmd_ANNN_checkSeq =>
-				IF (processed = '1') then
-					nextState <= putty_nr_3_wait;
-				else
-					nextState <= cmd_wait;
-				end if;
+--			WHEN cmd_ANNN_checkSeq =>
+--				IF (processed = '1') then
+--					nextState <= putty_n_3_wait;
+--				else
+--					nextState <= cmd_wait;
+--				end if;
 			WHEN cmd_L_checkSeq =>
 				IF (count_L >= 6) then
-					nextState <= putty_nr_3_wait;
+					nextState <= putty_n_3_wait;
 				else
 					nextState <= cmd_wait;
 				end if;
 			---------------------------------------
 			---------------------------------------
 			-- Newline after bitstream ended
-			WHEN putty_nr_3_wait =>
+			WHEN putty_n_3_wait =>
 				IF (txdone = '1') then
-					nextState <= putty_nr_3_tx;
+					nextState <= putty_n_3_tx;
 				ELSE
-					nextState <= putty_nr_3_wait;
+					nextState <= putty_n_3_wait;
 				END IF;
-			WHEN putty_nr_3_tx =>
---				s_dataTx <= "00001010";
---				IF (count_nr > 1) THEN
---				--ELSE
---					s_dataTx <= "00001101";
---				END IF;
+			-- Sets output corresponding to counter & passes it to Tx
+			WHEN putty_n_3_tx =>
 				IF (txdone = '1') then
 					v_txNow := '1';
-					IF (count_nr > 1) then
-						nextState <= putty_eq_2_wait;
-					else
-						nextState <= putty_nr_3_wait;
-					end if;
+					nextState <= putty_r_3_wait;
 				ELSE
-					nextState <= putty_nr_3_tx;
+					nextState <= putty_n_3_tx;
+				END IF;
+			WHEN putty_r_3_wait =>
+				IF (txdone = '1') then
+					nextState <= putty_r_3_tx;
+				ELSE
+					nextState <= putty_r_3_wait;
+				END IF;
+			-- Sets output corresponding to counter & passes it to Tx
+			WHEN putty_r_3_tx =>
+				IF (txdone = '1') then
+					v_txNow := '1';
+					nextState <= putty_eq_2_wait;
+				ELSE
+					nextState <= putty_r_3_tx;
 				END IF;
 			---------------------------------------
 			-- Dividing line after bitstream ended
@@ -572,7 +591,7 @@ begin
 				IF (txdone = '1') then
 					v_txNow := '1';
 					IF (count_eq > 4) then
-						nextState <= putty_nr_4_wait;
+						nextState <= putty_n_4_wait;
 					else
 						nextState <= putty_eq_2_wait;
 					end if;
@@ -581,22 +600,39 @@ begin
 				END IF;
 			---------------------------------------
 			-- Newline before outputting final values
-			WHEN putty_nr_4_wait =>
+			WHEN putty_n_4_wait =>
 				IF (txdone = '1') then
-					nextState <= putty_nr_4_tx;
+					nextState <= putty_n_4_tx;
 				ELSE
-					nextState <= putty_nr_4_wait;
+					nextState <= putty_n_4_wait;
 				END IF;
-			WHEN putty_nr_4_tx =>
+			-- Sets output corresponding to counter & passes it to Tx
+			WHEN putty_n_4_tx =>
 				IF (txdone = '1') then
 					v_txNow := '1';
-					IF (count_nr > 1) then
-						nextState <= INIT_idle;--cmd_ANNN_outputty;
-					else
-						nextState <= putty_nr_4_wait;
-					end if;
+					nextState <= putty_r_4_wait;
 				ELSE
-					nextState <= putty_nr_4_tx;
+					nextState <= putty_n_4_tx;
+				END IF;
+			WHEN putty_r_4_wait =>
+				IF (txdone = '1') then
+					nextState <= putty_r_4_tx;
+				ELSE
+					nextState <= putty_r_4_wait;
+				END IF;
+			-- Sets output corresponding to counter & passes it to Tx
+			WHEN putty_r_4_tx =>
+				IF (txdone = '1') then
+					v_txNow := '1';
+					nextState <= putty_wait_final; --INIT_idle;
+				ELSE
+					nextState <= putty_r_4_tx;
+				END IF;
+			WHEN putty_wait_final =>
+				IF (txdone = '1') then
+					nextState <= INIT_idle;
+				ELSE
+					nextState <= putty_wait_final;
 				END IF;
 			-----------------
 			WHEN OTHERS => 
@@ -606,7 +642,9 @@ begin
 		start <= v_start;
 		rxDone <= v_rxDone;
 		txNow <= v_txNow;
-		txdata <= s_dataTx;
+		if (txdone = '1') then
+			txdata <= s_dataTx;
+		end if;
 	END PROCESS; -- combi_nextState
 	-----------------------------------------------------
 	-- Sets signals out_indexMax and out_dataResults when seqDone
@@ -620,7 +658,7 @@ begin
 	-----------------------------------------------------
 	numWords: PROCESS(curState, rxData, clk)
 	begin
-		IF clk'EVENT AND clk = '1' THEN
+		IF rising_edge(CLK) THEN
 			IF (curState = valid_A_check) then
 				IF (rxData = "00110000") OR (rxData = "00110001") OR (rxData = "00110010") OR (rxData = "00110011") OR (rxData = "00110100") OR (rxData = "00110101") OR (rxData = "00110110") OR (rxData = "00110111") OR (rxData = "00111000") OR (rxData = "00111001") THEN
 					numWords_bcd(2) <= rxData(3 downto 0);
@@ -663,7 +701,7 @@ begin
 	-- Decoder from nibble hex literals to ascii character equivalents
 	ascii_decode: PROCESS(clk, byte)
 	BEGIN
-		IF clk'EVENT AND clk = '1' THEN
+		IF rising_edge(CLK) THEN
 			CASE byte(7 downto 4) is
 				WHEN "0000" => ANNN_dataTx(15 downto 8) <= "00110000";
 				WHEN "0001" => ANNN_dataTx(15 downto 8) <= "00110001";
@@ -712,7 +750,7 @@ begin
 	-- Decoder from nibble hex literals to ascii character equivalents
 	ascii_decode_L: PROCESS(clk, out_dataResults, count_L)
 	BEGIN
-		IF (clk'EVENT AND clk = '1') and (count_L < 7) THEN
+		IF (rising_edge(CLK)) and (count_L < 7) THEN
 			CASE out_dataResults(count_L)(7 downto 4) is
 				WHEN "0000" => L_dataTx(15 downto 8) <= "00110000";
 				WHEN "0001" => L_dataTx(15 downto 8) <= "00110001";
@@ -761,7 +799,7 @@ begin
 	-- Decoder from nibble hex literals to ascii character equivalents
 	ascii_decode_P: PROCESS(clk, out_dataResults)
 	BEGIN
-		IF (clk'EVENT AND clk = '1') THEN
+		IF (rising_edge(CLK)) THEN
 			CASE out_dataResults(3)(7 downto 4) is
 				WHEN "0000" => P_dataTx(15 downto 8) <= "00110000";
 				WHEN "0001" => P_dataTx(15 downto 8) <= "00110001";
@@ -848,24 +886,22 @@ begin
 		END IF;
 	END PROCESS;
 	------------------------------------------------------
-	dataTx_set: PROCESS(clk, reset, curState, ANNN_dataTx, rxData, rxNow, txDone, count_nr)
+	dataTx_set: PROCESS(clk, reset, curState, ANNN_dataTx, rxData, rxNow, txDone) --count_nr
 	begin
-		IF clk'EVENT AND clk='1' THEN
-			IF (reset = '1') or ((curState = putty_nr_4_tx) and ((txdone = '1') and (count_nr > 1))) THEN
+		IF rising_edge(clk) THEN
+			IF (reset = '1') or ((curState = putty_wait_final) and (txdone = '1')) THEN
 	        	s_dataTx <= X"FF"; -- assign a HEX value to std_logic_vector
 			elsif ((curState = INIT_idle) or (curState = valid_A_idle) or (curState = valid_1_idle) or (curState = valid_2_idle)) and (rxNow = '1') then
 				s_dataTx <= rxData;
-			elsif (curState = putty_nr_1_tx) or (curState = putty_nr_2_tx) or (curState = putty_nr_3_tx) or (curState = putty_nr_4_tx) then
-				IF (count_nr > 1) THEN
-					s_dataTx <= "00001101";
-				else
-					s_dataTx <= "00001010";
-				END IF;
-			elsif (curState = putty_eq_1_tx) or (curState = putty_eq_2_tx) then
+			elsif (curState = putty_n_1_wait) or (curState = putty_n_2_wait) or (curState = putty_n_3_wait) or (curState = putty_n_4_wait) then
+				s_dataTx <= "00001010"; -- Line Break
+			elsif (curState = putty_r_1_wait) or (curState = putty_r_2_wait) or (curState = putty_r_3_wait) or (curState = putty_r_4_wait) then
+				s_dataTx <= "00001101"; -- carriage return
+			elsif (curState = putty_eq_1_wait) or (curState = putty_eq_2_wait) then
 				s_dataTx <= "00111101";
-			elsif (curState = cmd_ANNN_buffer_1) and (txDone = '1') then
+			elsif (curState = cmd_ANNN_buffer_1) then
 				s_dataTx <= ANNN_dataTx(15 downto 8);
-			elsif (curState = cmd_ANNN_buffer_2) and (txDone = '1') then
+			elsif (curState = cmd_ANNN_buffer_2) then
 				s_dataTx <= ANNN_dataTx(7 downto 0);
 			--------
 			elsif (curState = putty_space) then
@@ -873,7 +909,7 @@ begin
 			--------
 			elsif (curState = cmd_L_buffer_1) then
 				s_dataTx <= L_dataTx(15 downto 8);
-			elsif (curState = cmd_L_buffer_2) then
+			elsif (curState = cmd_L_buffer_2) and (txdone = '1') then
 				s_dataTx <= L_dataTx(7 downto 0);
 			--------
 			elsif (curState = cmd_P_buffer_char_1) then
@@ -886,38 +922,42 @@ begin
 				s_dataTx <= P_dataTx_p_1;
 			elsif (curState = cmd_P_buffer_bcd_0) then
 				s_dataTx <= P_dataTx_p_0;
---			else
---				s_dataTx <= "11111111";
 			END IF;
 		END IF;
 	END PROCESS;
 	------------------------------------------------------
 	--Counter for 0s
-	counter: PROCESS (curState, reset, clk, en_count_nr, en_count_eq)
+	counter: PROCESS (curState, reset, clk, en_count_eq) --en_count_nr
 	BEGIN
 		IF reset = '1' THEN -- active high reset
-			count_nr <= 0;
+			--count_nr <= 0;
 			count_eq <= 0;
 			count_L <= 0;
 			--count_P <= 0;
-		ELSIF clk'EVENT AND clk = '1' THEN
+		ELSIF rising_edge(CLK) THEN
 			-- Counter for line feed & carriage return
-			IF (curState = putty_nr_1_wait) or (curState = putty_nr_1_tx) or 
-				(curState = putty_nr_2_wait) or (curState = putty_nr_2_tx) or
-				(curState = putty_nr_3_wait) or (curState = putty_nr_3_tx) or
-				(curState = putty_nr_4_wait) or (curState = putty_nr_4_tx) 
-				then --en_count = '1' THEN
-				-- Counter for 1s only counts in bit_1s state & when registered input is 1
-				if ((curState = putty_nr_1_wait) or (curState = putty_nr_2_wait) or 
-						(curState = putty_nr_3_wait) or (curState = putty_nr_4_wait)) 
-						and (en_count_nr = '1') then
-					count_nr <= count_nr + 1;
-				else
-					count_nr <= count_nr;
-				end if;
-			else
-				count_nr <= 0;
-			END IF;
+--			IF (curState = putty_n_1_wait) or (curState = putty_n_1_tx) or 
+--				(curState = putty_r_1_wait) or (curState = putty_r_1_tx) or 
+--				(curState = putty_n_2_wait) or (curState = putty_n_2_tx) or
+--				(curState = putty_r_2_wait) or (curState = putty_r_2_tx) or
+--				(curState = putty_n_3_wait) or (curState = putty_n_3_tx) or
+--				(curState = putty_r_3_wait) or (curState = putty_r_3_tx) or
+--				(curState = putty_n_4_wait) or (curState = putty_n_4_tx) or
+--				(curState = putty_r_4_wait) or (curState = putty_r_4_tx) 
+--				then --en_count = '1' THEN
+--				-- Counter for 1s only counts in bit_1s state & when registered input is 1
+--				if ((curState = putty_n_1_wait) or (curState = putty_r_1_wait) or 
+--						(curState = putty_n_2_wait) or (curState = putty_r_2_wait) or 
+--						(curState = putty_n_3_wait) or (curState = putty_r_3_wait) or 
+--						(curState = putty_n_4_wait) or (curState = putty_r_4_wait))
+--						and (en_count_nr = '1') then
+--					count_nr <= count_nr + 1;
+--				else
+--					count_nr <= count_nr;
+--				end if;
+--			else
+--				count_nr <= 0;
+--			END IF;
 			-- Counter for "="
 			IF (curState = putty_eq_1_wait) or (curState = putty_eq_1_tx) or 
 				(curState = putty_eq_2_wait) or (curState = putty_eq_2_tx) THEN
@@ -963,22 +1003,23 @@ begin
 	------------------------------------------------------
 	enable : PROCESS (reset, clk, curState, nextState)
 	BEGIN
-		en_count_nr <= '0';
+--		en_count_nr <= '0';
 		en_count_eq <= '0';
 		en_count_L <= '0';
 --		en_count_P <= '0';
-		IF ((curState = putty_nr_1_wait) and (nextState /= putty_nr_1_wait)) or 
-			((curState = putty_nr_2_wait) and (nextState /= putty_nr_2_wait)) or
-			((curState = putty_nr_3_wait) and (nextState /= putty_nr_3_wait)) or
-			((curState = putty_nr_4_wait) and (nextState /= putty_nr_4_wait))
-			then --en_count = '1' THEN
-			-- Counter for 1s only counts in bit_1s state & when registered input is 1
-			en_count_nr <= '1';
-		END IF;
-		IF ((curState = putty_eq_1_wait) and (nextState /= putty_eq_1_wait)) or ((curState = putty_eq_2_wait) and (nextState /= putty_eq_2_wait)) THEN
+--		IF 	((curState = putty_n_1_wait) or (curState = putty_r_1_wait) or 
+--			(curState = putty_n_2_wait) or (curState = putty_r_2_wait) or 
+--			(curState = putty_n_3_wait) or (curState = putty_r_3_wait) or 
+--			(curState = putty_n_4_wait) or (curState = putty_r_4_wait))
+--				and (nextState /= curState)
+--			then --en_count = '1' THEN
+--			-- Counter for 1s only counts in bit_1s state & when registered input is 1
+--			en_count_nr <= '1';
+--		END IF;
+		IF ((curState = putty_eq_1_wait) or (curState = putty_eq_2_wait)) and (nextState /= curState) THEN
 			en_count_eq <= '1';
 		END IF;
-		IF (curState = cmd_L_checkSeq) and (nextState /= cmd_L_checkSeq) then
+		IF (curState = cmd_L_checkSeq) and (nextState /= curState) then
 			en_count_L <= '1';
 		end if;
 --		IF (curState = cmd_P_checkSeq) and (nextState /= cmd_P_checkSeq) then
